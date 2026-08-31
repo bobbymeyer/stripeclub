@@ -10,7 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_31_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_31_130000) do
+  create_table "colorways", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.integer "palette_id", null: false
+    t.integer "pattern_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pattern_id"], name: "index_colorways_on_pattern_id"
+  end
+
+  create_table "palette_snapshots", force: :cascade do |t|
+    t.json "colors", null: false
+    t.integer "colorway_id", null: false
+    t.datetime "created_at", null: false
+    t.string "palette_name"
+    t.datetime "taken_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["colorway_id"], name: "index_palette_snapshots_on_colorway_id", unique: true
+  end
+
   create_table "patterns", force: :cascade do |t|
     t.decimal "angle", precision: 7, scale: 3, default: "90.0", null: false
     t.datetime "created_at", null: false
@@ -47,6 +66,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_120000) do
     t.index ["pattern_id"], name: "index_values_on_pattern_id"
   end
 
+  add_foreign_key "colorways", "patterns"
+  add_foreign_key "palette_snapshots", "colorways"
   add_foreign_key "sequences", "patterns"
   add_foreign_key "stripes", "sequences"
   add_foreign_key "stripes", "values"

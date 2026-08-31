@@ -5,6 +5,8 @@
 class Pattern < ApplicationRecord
   HALF_TURN = 180
 
+  ValueInUse = Class.new(StandardError)
+
   # The sequence is declared before the values on purpose. Both are destroyed
   # with the pattern, in the order they are declared here, and the foreign key
   # on stripes.value_id will not let a value go while a stripe still draws it
@@ -31,6 +33,27 @@ class Pattern < ApplicationRecord
     transaction do
       values.create!(position: slot_count)
       update!(slot_count: slot_count + 1)
+    end
+
+    self
+  end
+
+  # "−". The mirror of "+", and only for a slot nothing draws: a value with
+  # stripes pointing at it cannot go without deciding what those stripes draw
+  # instead, which is an edit to the composition rather than to its palette.
+  #
+  # Every colorway the added slot invalidated comes back on its own, because
+  # invalidation is asked rather than stored.
+  def remove_value!
+    raise ValueInUse, "a pattern keeps its ground" if slot_count <= 1
+
+    values.reload.last.then do |value|
+      raise ValueInUse, "slot #{value.position} is still drawn" if value.stripes.exists?
+
+      transaction do
+        value.destroy!
+        update!(slot_count: slot_count - 1)
+      end
     end
 
     self

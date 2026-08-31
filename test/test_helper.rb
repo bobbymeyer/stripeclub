@@ -31,5 +31,18 @@ module ActiveSupport
 
       pattern.sequence.tap { |sequence| sequence.stripes.reload }
     end
+
+    # A palette shaped the way Pandatone sends them, built from hexes because
+    # the hex is the only part of a colour these tests are ever about.
+    def pandatone_palette(*hexes, id: 7, name: "Sample")
+      colors = hexes.each_with_index.map do |hex, index|
+        Pandatone::Color.new(
+          id: (id * 100) + index, name: "Colour #{index}", hex: hex,
+          red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16)
+        )
+      end
+
+      Pandatone::Palette.new(id: id, name: name, colors: colors)
+    end
   end
 end
