@@ -8,7 +8,10 @@
           hint: "How many values the structure has. Slot 0 is the ground. Change it later with + and −." %>
   <% end %>
 
-  <%= form.select :angle, angle_choices %>
+  <%= form.number_field :angle, step: 0.001, min: 0, max: 179.999,
+        hint: "Degrees, anticlockwise from the horizontal as the page shows it. " \
+              "0 is horizontal, 90 is vertical, 45 leans like a forward slash. " \
+              "Past 180 is the same stripes seen from the other end, so it folds back." %>
 
   <div class="run">
     <%= form.submit submit_label %>

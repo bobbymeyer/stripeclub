@@ -26,7 +26,7 @@
     <dd><%= pluralize @pattern.sequence.stripes.size, "stripe" %>, summing to one</dd>
   </dl>
 
-  <table class="table">
+  <table class="table repeat">
     <caption>The repeat, in order along the stripe normal.</caption>
     <thead>
       <tr>
@@ -45,6 +45,34 @@
       <% end %>
     </tbody>
   </table>
+
+  <section class="tiling">
+    <table class="table tiling__modes">
+      <caption>
+        Whether the repeat closes on itself, per output mode. A status and not a rule —
+        nothing here refuses to render.
+      </caption>
+      <thead>
+        <tr><th scope="col">Output</th><th scope="col">Tiling</th></tr>
+      </thead>
+      <tbody>
+        <% tiling_modes(@pattern).each do |mode, tiling| %>
+          <tr class="<%= "tiling--refused" unless tiling.seamless? %>">
+            <td><%= tiling_mode_name mode %></td>
+            <td><%= tiling_status_words tiling %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% unbroken = Tiling.new(@pattern, mode: :unbroken) %>
+    <p class="hint"><%= unbroken.reason %></p>
+
+    <% unless unbroken.seamless? %>
+      <%= button_to "Snap to #{unbroken.fitted_angle.round(3)}°",
+            pattern_tiling_path(@pattern), method: :patch, class: "button" %>
+    <% end %>
+  </section>
 
   <div class="run">
     <%= button_to "Add a slot", pattern_slot_path(@pattern), class: "button" %>

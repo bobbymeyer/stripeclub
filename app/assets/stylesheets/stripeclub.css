@@ -92,3 +92,22 @@
 /* The stripe number is an ordinal, not a measurement: it wants to be narrow
    and out of the way of the two columns that carry the answer. */
 .ordinal { width: 2.5rem; }
+
+/* --- Tiling ------------------------------------------------------------
+   A row that does not tile is set in ink against the quiet ink of the rest,
+   and says so in words as well. its-swiss's rule is that no signal rests on
+   colour alone, and a red cross is exactly that — this one would still read
+   printed in grey, or read aloud. */
+.tiling--refused td {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.tiling--refused td:first-child::before {
+  content: "";
+  display: inline-block;
+  width: var(--space-2);
+  border-top: var(--rule-heavy, 2px) solid var(--ink);
+  vertical-align: middle;
+  margin-inline-end: var(--space-1);
+}

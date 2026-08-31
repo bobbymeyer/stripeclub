@@ -10,10 +10,6 @@ class SvgPattern
   # The colorway cannot dress every slot the pattern has.
   NothingToDraw = Class.new(StandardError)
 
-  # Laid out along an axis, so until patternTransform arrives in step five
-  # there is nothing here that can draw an angle between them.
-  UnsupportedAngle = Class.new(StandardError)
-
   NAMESPACE = "http://www.w3.org/2000/svg".freeze
 
   VERTICAL = 90
@@ -40,7 +36,6 @@ class SvgPattern
 
   def to_s
     raise NothingToDraw, "the pattern has slots this colorway's palette cannot fill" if @dressing.invalidated?
-    raise UnsupportedAngle, "#{angle} is not an axis" unless axis_aligned?
 
     tag.svg(
       safe_join([ tag.defs(pattern_element), surface ]),
@@ -52,7 +47,8 @@ class SvgPattern
     def pattern_element
       tag.pattern(
         safe_join(stripes.each_with_index.map { |stripe, index| rect_for(stripe, index) }),
-        id: @id, width: number(@period), height: number(@period), patternUnits: "userSpaceOnUse"
+        id: @id, width: number(@period), height: number(@period), patternUnits: "userSpaceOnUse",
+        **turn
       )
     end
 
@@ -69,6 +65,31 @@ class SvgPattern
       else
         tag.rect(x: "0", y: number(start), width: number(@period), height: number(thickness), fill: fill_for(stripe))
       end
+    end
+
+    # Any angle, by turning the tile rather than by laying the stripes out
+    # along it. patternTransform turns the tile and the lattice it repeats on
+    # together, so the tiles go on meeting however far round it goes — which
+    # is the whole reason this form never has to warn about an angle.
+    #
+    # Measured from the upright, because the upright is what is laid out: at
+    # 90° there is nothing to turn.
+    #
+    # The angle is read anticlockwise from the horizontal *as the page shows
+    # it*, so 45° leans the way a forward slash does. SVG's y points down, so
+    # anticlockwise on the page is a clockwise rotate — hence 90 − θ and not
+    # θ − 90. Rendering it the other way round is not a wrong angle, it is the
+    # mirror of the right one, which is the kind of thing that is only ever
+    # caught by looking.
+    #
+    # The axes are laid out directly instead. The geometry is already right,
+    # the axis-aligned exports need it in that form regardless, and a
+    # rotate(0) over a tile of vertical stripes is something to reason about
+    # for no gain at all.
+    def turn
+      return {} if axis_aligned?
+
+      { patternTransform: "rotate(#{number(VERTICAL - angle)})" }
     end
 
     # The edges of the repeat, as proportions, with the last one placed at the
@@ -99,8 +120,10 @@ class SvgPattern
       @dressing.pattern.angle
     end
 
+    # Everything but the horizontal lays its repeat out along x. The turn puts
+    # it where it belongs afterwards.
     def vertical?
-      angle == VERTICAL
+      angle != HORIZONTAL
     end
 
     def axis_aligned?

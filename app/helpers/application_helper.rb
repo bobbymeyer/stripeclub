@@ -11,18 +11,33 @@ module ApplicationHelper
       **options, class: token_list("preview", options[:class]))
   end
 
-  # The two angles the renderer lays out directly. Step five adds the rest,
-  # and this is where they will read as degrees.
+  # The two axes have names worth using; everything else is a number of
+  # degrees and reads better as one.
   def angle_in_words(pattern)
     case pattern.angle
     when SvgPattern::VERTICAL then "Vertical"
     when SvgPattern::HORIZONTAL then "Horizontal"
-    else "#{pattern.angle.to_f.round(1)}°"
+    else "#{pattern.angle.to_f.round(3).to_s.delete_suffix(".0")}°"
     end
   end
 
-  def angle_choices
-    [ [ "Vertical", SvgPattern::VERTICAL ], [ "Horizontal", SvgPattern::HORIZONTAL ] ]
+  # Tiling is a status, so it is reported for every mode at once rather than
+  # for whichever one happens to be selected. A pattern that closes as an SVG
+  # pattern and not as an unbroken tile is a normal pattern, and seeing both
+  # at once is what makes that legible.
+  def tiling_modes(pattern)
+    Tiling::MODES.index_with { |mode| Tiling.new(pattern, mode: mode) }
+  end
+
+  def tiling_mode_name(mode)
+    { svg_pattern: "SVG pattern", row_broken: "Row-broken tile", unbroken: "Unbroken tile" }.fetch(mode)
+  end
+
+  # Words, not a colour and not only a mark. its-swiss's own rule is that no
+  # signal rests on colour alone, and a red cross is exactly that.
+  def tiling_status_words(tiling)
+    { seamless: "Tiles", seamless_with_rows: "Tiles, with rows", does_not_tile: "Doesn't tile" }
+      .fetch(tiling.status)
   end
 
   # Slot 0 is the ground, and calling it that everywhere is the difference

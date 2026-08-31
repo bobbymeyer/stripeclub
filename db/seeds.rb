@@ -1,7 +1,10 @@
 # A few patterns to look at. Structure only — none of these has a palette,
 # because none of them needs one to be a pattern.
 #
-# Angles are the two the renderer lays out directly until step five.
+# The two axes are laid out directly; everything else is the same repeat with
+# the tile turned under it. "Bias" does not close on an unbroken tile — that is
+# the point of it, and the show page says so and offers the nearest angle that
+# does.
 COMPOSITIONS = [
   { name: "Awning", slot_count: 2, angle: 90, widths: [ 0.6, 0.4 ] },
   { name: "Ticking", slot_count: 2, angle: 90, widths: [ 0.88, 0.12 ] },
@@ -14,7 +17,10 @@ COMPOSITIONS = [
   { name: "Ledger", slot_count: 6, angle: 0, widths: [ 0.3, 0.14, 0.14, 0.14, 0.14, 0.14 ] },
   { name: "Marquee", slot_count: 4, angle: 90, widths: [ 0.4, 0.2, 0.3, 0.1 ] },
   { name: "Boucle", slot_count: 3, angle: 90, widths: [ 0.6, 0.2, 0.2 ] },
-  { name: "Shirting", slot_count: 4, angle: 0, widths: [ 0.55, 0.15, 0.15, 0.15 ] }
+  { name: "Shirting", slot_count: 4, angle: 0, widths: [ 0.55, 0.15, 0.15, 0.15 ] },
+  { name: "Bias", slot_count: 3, angle: 30, widths: [ 0.5, 0.3, 0.2 ] },
+  { name: "Chevron Ground", slot_count: 2, angle: 45, widths: [ 0.75, 0.25 ] },
+  { name: "Barber", slot_count: 3, angle: 116.565, widths: [ 0.4, 0.4, 0.2 ] }
 ].freeze
 
 COMPOSITIONS.each do |composition|

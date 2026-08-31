@@ -19,6 +19,11 @@ Rails.application.routes.draw do
     # refused while a stripe still draws it, and neither of those survives
     # being spelled as an update to a count.
     resource :slot, only: %i[ create destroy ], module: :patterns
+
+    # Snap To Tiling. An update to the pattern's tiling rather than to its
+    # angle: what is asked for is "make this close", and which angle does that
+    # is the answer, not the request.
+    resource :tiling, only: :update, module: :patterns
   end
 
   root "patterns#index"

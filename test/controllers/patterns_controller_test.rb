@@ -53,8 +53,61 @@ class PatternsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "svg pattern rect", 3
-    assert_select "table.table tbody tr", 3
+    assert_select "table.repeat tbody tr", 3
     assert_select "dl.pairs"
+  end
+
+  # Tiling is a status, computed per output mode and not enforced. All three
+  # modes are reported at once: a pattern that closes as an SVG pattern and
+  # not as an unbroken tile is an ordinary pattern, and seeing both together
+  # is what makes that readable rather than alarming.
+  test "showing a pattern reports its tiling for every output mode" do
+    pattern = Pattern.create!(name: "Angled", slot_count: 2, angle: 30)
+
+    get pattern_path(pattern)
+
+    assert_select "table.tiling__modes tbody tr", Tiling::MODES.size
+    assert_select "table.tiling__modes tbody tr.tiling--refused td", text: "Doesn't tile"
+    assert_select "form[action=?] button", pattern_tiling_path(pattern), text: /Snap to 26\.565°/
+  end
+
+  test "a pattern that already closes is offered no snap" do
+    pattern = Pattern.create!(name: "Fitted", slot_count: 2, angle: 45)
+
+    get pattern_path(pattern)
+
+    assert_select "tr.tiling--refused", 0
+    assert_select "form[action=?]", pattern_tiling_path(pattern), 0
+  end
+
+  test "snapping moves the angle to one that closes" do
+    pattern = Pattern.create!(name: "Snapped", slot_count: 2, angle: 30)
+
+    patch pattern_tiling_path(pattern)
+
+    assert_redirected_to pattern_path(pattern)
+    assert_in_delta 26.565, pattern.reload.angle.to_f, 0.001
+    assert_predicate Tiling.new(pattern, mode: :unbroken), :seamless?
+  end
+
+  test "snapping a pattern that already closes leaves it alone" do
+    pattern = Pattern.create!(name: "Already", slot_count: 2, angle: 45)
+
+    patch pattern_tiling_path(pattern)
+
+    assert_in_delta 45, pattern.reload.angle.to_f, 0.001
+  end
+
+  test "an angle off the axes composes and draws" do
+    post patterns_path, params: { pattern: { name: "Diagonal", slot_count: 2, angle: 22.5 } }
+
+    pattern = Pattern.order(:created_at).last
+
+    assert_in_delta 22.5, pattern.angle.to_f, 0.001
+
+    get pattern_path(pattern)
+
+    assert_select "svg pattern[patternTransform=?]", "rotate(67.5)"
   end
 
   test "composing a pattern goes to it" do

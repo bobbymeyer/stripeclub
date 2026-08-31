@@ -16,7 +16,9 @@ class SvgGoldenTest < ActiveSupport::TestCase
     "vertical-quarters" => { angle: 90, widths: [ 0.25, 0.25, 0.25, 0.25 ] },
     "vertical-uneven" => { angle: 90, widths: [ 0.6, 0.4 ] },
     "horizontal-thirds" => { angle: 0, widths: Array.new(3) { BigDecimal("0.333333") } },
-    "horizontal-ground-and-hairline" => { angle: 0, widths: [ 0.94, 0.06 ] }
+    "horizontal-ground-and-hairline" => { angle: 0, widths: [ 0.94, 0.06 ] },
+    "diagonal-halves" => { angle: 45, widths: [ 0.5, 0.5 ] },
+    "diagonal-leaning-back" => { angle: 116.565, widths: [ 0.7, 0.3 ] }
   }.freeze
 
   CASES.each do |name, attributes|

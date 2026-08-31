@@ -80,12 +80,43 @@ class SvgPatternTest < ActiveSupport::TestCase
     assert_raises(SvgPattern::NothingToDraw) { SvgPattern.new(colorway.reload).to_s }
   end
 
-  # Step five. Until it lands, an angle this renderer cannot lay out
-  # axis-aligned says so rather than drawing the wrong thing.
-  test "an angle off the axes is refused until patternTransform arrives" do
-    colorway = colorway_for(angle: 45, widths: [ 0.5, 0.5 ])
+  # Any angle, by turning the tile rather than by laying the stripes out along
+  # it. patternTransform rotates the tile and the lattice it repeats on
+  # together, so the tiles still meet — which is why the reference form never
+  # has to warn about an angle.
+  test "an angle off the axes turns the tile" do
+    element = pattern_element(angle: 45, widths: [ 0.5, 0.5 ])
 
-    assert_raises(SvgPattern::UnsupportedAngle) { SvgPattern.new(colorway).to_s }
+    assert_equal "rotate(45)", element["patternTransform"]
+  end
+
+  test "a turned tile still lays its repeat out along x" do
+    rects = rects_for(angle: 30, widths: [ 0.25, 0.75 ], period: 100)
+
+    assert_equal [ "0", "25" ], rects.map { |rect| rect["x"] }
+    assert_equal [ "100", "100" ], rects.map { |rect| rect["height"] }
+  end
+
+  # The two axes are laid out directly and carry no transform. The geometry is
+  # already right, the axis-aligned exports need it in that form anyway, and a
+  # rotate(0) on a tile of vertical stripes is a thing to reason about for no
+  # gain.
+  test "the axes are laid out rather than turned" do
+    assert_nil pattern_element(angle: 90, widths: [ 0.5, 0.5 ])["patternTransform"]
+    assert_nil pattern_element(angle: 0, widths: [ 0.5, 0.5 ])["patternTransform"]
+  end
+
+  # Turning the tile from the upright: at 90° there is nothing to turn, and
+  # the further from upright the further it goes. Past the upright it turns
+  # the other way, which is what makes the stripes lean the other way.
+  #
+  # The sign is the whole content of this test. Both signs produce a diagonal
+  # and only one produces the diagonal that was asked for; the other is its
+  # mirror, and reads as a perfectly good pattern until it is put beside the
+  # angle someone typed.
+  test "the turn is measured from the upright" do
+    assert_equal "rotate(60)", pattern_element(angle: 30, widths: [ 0.5, 0.5 ])["patternTransform"]
+    assert_equal "rotate(-45)", pattern_element(angle: 135, widths: [ 0.5, 0.5 ])["patternTransform"]
   end
 
   test "the document is well formed xml in the svg namespace" do
