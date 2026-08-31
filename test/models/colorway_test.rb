@@ -12,7 +12,21 @@ class ColorwayTest < ActiveSupport::TestCase
   test "slot zero takes the lightest colour, because slot zero is the ground" do
     colorway = colorway_for(slot_count: 2, palette: %w[ #12120F #FAF8F4 ])
 
-    assert_equal "#FAF8F4", colorway.color_for(ground(colorway)).hex
+    assert_equal "#FAF8F4", colorway.color_for(first_stripe(colorway)).hex
+    assert_equal 0, first_stripe(colorway).value.position
+  end
+
+  # Nothing points at a value once its stripes and its rules are gone, which
+  # is the order the pattern destroys them in. A colorway left behind would
+  # also leave a snapshot and a palette id belonging to a pattern that is not
+  # there.
+  test "destroying a pattern takes its colorways with it" do
+    colorway = colorway_for(slot_count: 2, palette: %w[ #FAF8F4 #12120F ])
+    colorway.bind(colorway.pattern.values.first, kind: :assigned_slot, slot: 1)
+
+    assert_difference [ "Colorway.count", "PaletteSnapshot.count", "ValueRule.count" ], -1 do
+      assert colorway.pattern.destroy
+    end
   end
 
   # p > n, so the ranks are sampled. Both ends are kept: the ground stays the
@@ -89,7 +103,7 @@ class ColorwayTest < ActiveSupport::TestCase
       )
     end
 
-    def ground(colorway)
-      colorway.pattern.values.find_by!(position: 0)
+    def first_stripe(colorway)
+      colorway.pattern.sequence.stripes.first
     end
 end

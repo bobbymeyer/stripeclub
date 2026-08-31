@@ -32,15 +32,31 @@ class ValueScale
     false
   end
 
-  def color_for(value)
-    Pandatone::Color.new(
-      id: value.position, name: "Value #{value.position}", hex: Luminance.gray(lightness_for(value.position))
-    )
+  # Takes a stripe, like a colorway does, so the renderer never learns which
+  # of the two it was handed. There is nothing along the repeat that changes
+  # the answer here — a value scale has no rule that counts stripes — so it
+  # reads straight through to the value.
+  def color_for(stripe)
+    gray_for(stripe.value)
   end
 
   def colors
-    pattern.values.map { |value| color_for(value) }
+    pattern.sequence.stripes.map { |stripe| color_for(stripe) }
   end
+
+  # The ladder itself, one step per slot, whether or not a stripe draws it.
+  def ladder
+    pattern.values.map { |value| gray_for(value) }
+  end
+
+  # The step of the ladder this value sits on, whether or not a stripe draws
+  # it. The editor asks for this one slot at a time.
+  def gray_for(value)
+      Pandatone::Color.new(
+        id: value.position, name: "Value #{value.position}",
+        hex: Luminance.gray(lightness_for(value.position))
+      )
+    end
 
   private
     def lightness_for(position)

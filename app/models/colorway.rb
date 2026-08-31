@@ -8,6 +8,11 @@ class Colorway < ApplicationRecord
   belongs_to :pattern
   has_one :snapshot, class_name: "PaletteSnapshot", dependent: :destroy, inverse_of: :colorway
 
+  # Only the values whose rule is not the default. Auto-Value-Match is what a
+  # value does when nothing has been said about it, so a row for it would be a
+  # row saying nothing — and "+" would have to remember to write one.
+  has_many :rules, class_name: "ValueRule", dependent: :destroy, inverse_of: :colorway
+
   validates :palette_id, presence: true
   validate :palette_serves_the_pattern, on: :create
 
@@ -33,7 +38,11 @@ class Colorway < ApplicationRecord
     snapshot.nil? || snapshot.size < pattern.slot_count
   end
 
-  # The colour each value resolves to, in slot order.
+  # The colour of each stripe of the repeat, in order.
+  #
+  # Per stripe and not per value, because two of the four rules vary along the
+  # repeat: Random draws once per stripe, and Increment counts them. A value
+  # under either of those has no single colour to report.
   #
   # Empty while invalidated rather than short or padded: a colorway that
   # cannot dress every slot has nothing honest to say about any of them, and
@@ -41,19 +50,29 @@ class Colorway < ApplicationRecord
   def colors
     return [] if invalidated?
 
-    pattern.values.map { |value| color_for(value) }
+    pattern.sequence.stripes.map { |stripe| color_for(stripe) }
   end
 
-  # Auto-Value-Match: the palette colour at this value's luminance rank.
-  #
-  # When the palette has more colours than the pattern has slots the ranks are
-  # sampled, and both ends are kept — the ground stays the lightest colour the
-  # palette has and the last slot the darkest, because that range is what the
-  # palette was chosen for. Sampling from one end would quietly drop it.
-  def color_for(value)
+  def color_for(stripe)
     return nil if invalidated?
 
-    snapshot.palette.ranked[rank_for(value.position)]
+    rule_for(stripe.value).color_for(stripe)
+  end
+
+  # The rule this value carries, or the default it carries by carrying none.
+  # The default is built rather than saved: a colorway that has said nothing
+  # about any of its values has no rows at all.
+  def rule_for(value)
+    stored_rules[value.id] ||= ValueRule.new(colorway: self, value: value, kind: :auto_value_match)
+  end
+
+  # Say what a value resolves to. One rule per value, so saying it twice
+  # replaces rather than adds.
+  def bind(value, kind:, **settings)
+    rules.find_or_initialize_by(value: value).tap do |rule|
+      rule.update!(kind: kind, settings: settings.stringify_keys)
+      @stored_rules = nil
+    end
   end
 
   # What the renderer names the `<pattern>` element, so two previews can sit
@@ -67,10 +86,8 @@ class Colorway < ApplicationRecord
   end
 
   private
-    def rank_for(position)
-      return 0 if pattern.slot_count <= 1
-
-      (position * (snapshot.size - 1)).fdiv(pattern.slot_count - 1).round
+    def stored_rules
+      @stored_rules ||= rules.index_by(&:value_id)
     end
 
     def snapshot_of(color)

@@ -46,6 +46,57 @@
     </tbody>
   </table>
 
+  <section class="slots">
+    <table class="table">
+      <caption>
+        The slots, ranked from the ground. A slot bound to its rank is still doing value
+        work; one bound to a rule takes its colour from the palette's order instead.
+      </caption>
+      <thead>
+        <tr><th scope="col">Slot</th><th scope="col">Binding</th></tr>
+      </thead>
+      <tbody>
+        <% @pattern.values.each do |value| %>
+          <tr>
+            <td><%= slot_swatch value %> <%= slot_name value %></td>
+            <td><%= drawn_by?(@pattern, value) ? "By rank" : "By rank, drawn by nothing" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <% if @pattern.colorways.any? %>
+    <section class="colorways stack">
+      <% @pattern.colorways.each do |colorway| %>
+        <article class="colorway">
+          <h2><%= colorway.snapshot.palette_name %></h2>
+
+          <% if colorway.invalidated? %>
+            <p class="hint">
+              Invalid: the pattern has <%= @pattern.slot_count %> slots and this palette has
+              <%= colorway.snapshot.size %> colours. Kept, not deleted — take a slot away and it comes back.
+            </p>
+          <% else %>
+            <%= pattern_preview colorway, size: 180, period: 45, class: "preview--inline" %>
+
+            <table class="table">
+              <thead><tr><th scope="col">Slot</th><th scope="col">Rule</th></tr></thead>
+              <tbody>
+                <% @pattern.values.each do |value| %>
+                  <tr>
+                    <td><%= slot_swatch value, colorway: colorway %> <%= slot_name value %></td>
+                    <td><%= rule_name colorway.rule_for(value) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% end %>
+        </article>
+      <% end %>
+    </section>
+  <% end %>
+
   <section class="tiling">
     <table class="table tiling__modes">
       <caption>

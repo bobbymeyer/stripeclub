@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_31_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_31_140000) do
   create_table "colorways", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -57,6 +57,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_130000) do
     t.index ["value_id"], name: "index_stripes_on_value_id"
   end
 
+  create_table "value_rules", force: :cascade do |t|
+    t.integer "colorway_id", null: false
+    t.datetime "created_at", null: false
+    t.string "kind", default: "auto_value_match", null: false
+    t.json "settings", null: false
+    t.datetime "updated_at", null: false
+    t.integer "value_id", null: false
+    t.index ["colorway_id", "value_id"], name: "index_value_rules_on_colorway_id_and_value_id", unique: true
+    t.index ["colorway_id"], name: "index_value_rules_on_colorway_id"
+    t.index ["value_id"], name: "index_value_rules_on_value_id"
+  end
+
   create_table "values", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "pattern_id", null: false
@@ -71,5 +83,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_130000) do
   add_foreign_key "sequences", "patterns"
   add_foreign_key "stripes", "sequences"
   add_foreign_key "stripes", "values"
+  add_foreign_key "value_rules", "colorways"
+  add_foreign_key "value_rules", "values"
   add_foreign_key "values", "patterns"
 end

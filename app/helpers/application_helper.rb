@@ -45,4 +45,38 @@ module ApplicationHelper
   def slot_name(value)
     value.position.zero? ? "Ground" : "Slot #{value.position}"
   end
+
+  # Which parts of the structure are still doing value work.
+  #
+  # A value bound to its rank shows the step of the ladder it sits on, because
+  # that step is what decides its colour. A value bound to a rule shows a
+  # hatch instead: its rank has stopped mattering, and a swatch that went on
+  # showing one would be showing something the colorway no longer reads.
+  #
+  # The hatch is never the only thing saying so — every place this is used
+  # names the rule in words beside it — because a pattern in a small square is
+  # exactly the kind of signal some readers do not get.
+  def slot_swatch(value, colorway: nil)
+    rule = colorway&.rule_for(value)
+
+    if rule.nil? || rule.binds_to_rank?
+      tag.span(class: "slot-swatch", style: "background: #{ValueScale.new(value.pattern).gray_for(value).hex}")
+    else
+      tag.span(class: "slot-swatch slot-swatch--ruled")
+    end
+  end
+
+  # A slot nothing draws is what "+" leaves behind: a rank that exists and is
+  # not in the repeat yet.
+  def drawn_by?(pattern, value)
+    pattern.sequence.stripes.any? { |stripe| stripe.value_id == value.id }
+  end
+
+  def rule_name(rule)
+    {
+      "auto_value_match" => "By rank", "assigned_slot" => "Palette slot #{rule.slot}",
+      "increment" => "Increment from #{rule.start} by #{rule.step}",
+      "random" => "Random of #{rule.subset.to_a.size}, seeded"
+    }.fetch(rule.kind)
+  end
 end

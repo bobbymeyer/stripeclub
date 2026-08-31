@@ -57,6 +57,51 @@ class PatternsControllerTest < ActionDispatch::IntegrationTest
     assert_select "dl.pairs"
   end
 
+  test "showing a pattern lists its slots, ranked from the ground" do
+    pattern = Pattern.create!(name: "Slotted", slot_count: 3)
+
+    get pattern_path(pattern)
+
+    assert_select "section.slots tbody tr", 3
+    assert_select "section.slots tbody tr:first-child td", /Ground/
+    assert_select "section.slots .slot-swatch", 3
+    assert_select "section.slots .slot-swatch--ruled", 0
+  end
+
+  test "a slot nothing draws yet says so" do
+    pattern = Pattern.create!(name: "Grown", slot_count: 2)
+    pattern.add_value!
+
+    get pattern_path(pattern)
+
+    assert_select "section.slots tbody tr", 3
+    assert_select "section.slots tbody tr", text: /drawn by nothing/
+  end
+
+  # The distinction the handoff asks the editor to show: which parts of the
+  # structure are still doing value work. A hatched swatch and the rule named
+  # beside it, never the hatch alone.
+  test "a colorway marks which slots are bound to a rule rather than to their rank" do
+    colorway = colorway_for("Ruled", %w[ #FAF8F4 #808080 #12120F ])
+    colorway.bind(colorway.pattern.values.second, kind: :assigned_slot, slot: 0)
+
+    get pattern_path(colorway.pattern)
+
+    assert_select "section.colorways .slot-swatch--ruled", 1
+    assert_select "section.colorways tbody tr", text: /Palette slot 0/
+    assert_select "section.colorways tbody tr", text: /By rank/
+  end
+
+  test "an invalidated colorway is shown as kept rather than drawn" do
+    colorway = colorway_for("Outgrown", %w[ #FAF8F4 #12120F ])
+    colorway.pattern.add_value!
+
+    get pattern_path(colorway.pattern)
+
+    assert_select "section.colorways", text: /Invalid/
+    assert_select "section.colorways svg", 0
+  end
+
   # Tiling is a status, computed per output mode and not enforced. All three
   # modes are reported at once: a pattern that closes as an SVG pattern and
   # not as an unbroken tile is an ordinary pattern, and seeing both together
@@ -159,4 +204,20 @@ class PatternsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal 2, pattern.reload.slot_count
   end
+
+  private
+    # A colorway built from a palette written out here rather than fetched.
+    # Choosing a palette needs Pandatone; everything after the choosing does
+    # not, and these tests are about everything after.
+    def colorway_for(name, hexes)
+      pattern = Pattern.create!(name: name, slot_count: hexes.size)
+
+      colors = hexes.each_with_index.map do |hex, index|
+        Pandatone::Color.new(id: index, name: "Colour #{index}", hex: hex,
+          red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16))
+      end
+
+      Colorway.create!(pattern: pattern,
+        palette: Pandatone::Palette.new(id: 1, name: "Seeded", colors: colors))
+    end
 end

@@ -109,7 +109,7 @@ class SvgPattern
     end
 
     def fill_for(stripe)
-      @dressing.color_for(stripe.value).hex
+      @dressing.color_for(stripe).hex
     end
 
     def stripes

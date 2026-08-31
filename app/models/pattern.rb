@@ -7,11 +7,13 @@ class Pattern < ApplicationRecord
 
   ValueInUse = Class.new(StandardError)
 
-  # The sequence is declared before the values on purpose. Both are destroyed
-  # with the pattern, in the order they are declared here, and the foreign key
-  # on stripes.value_id will not let a value go while a stripe still draws it
-  # — so the stripes have to go first. Reversing these two lines makes
-  # destroying a pattern raise, which is what the destroy test is watching.
+  # The order these three are declared in is the order they are destroyed in,
+  # and it is load-bearing. A value will not go while anything still points at
+  # it: a stripe that draws it, or a colorway rule that names it. So the
+  # colorways go first, taking their rules, then the sequence, taking its
+  # stripes, and only then the values. Reordering these lines makes destroying
+  # a pattern raise, which is what the destroy tests are watching.
+  has_many :colorways, dependent: :destroy, inverse_of: :pattern
   has_one :sequence, dependent: :destroy, inverse_of: :pattern
   has_many :values, -> { order(:position) }, dependent: :destroy, inverse_of: :pattern
 

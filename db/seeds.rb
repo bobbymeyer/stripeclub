@@ -32,4 +32,34 @@ COMPOSITIONS.each do |composition|
   end
 end
 
+# One colorway, from a palette written out here rather than fetched.
+#
+# Choosing a palette is Pandatone's part and needs PANDATONE_URL set;
+# everything after the choosing is Stripeclub's and needs nothing. The palette
+# is stored out of its rank order on purpose — it ranks cream, gold, red, ink
+# — so the three rules that read a position and the one that reads a rank are
+# telling apart on sight.
+DRESSED = "Deck Chair".freeze
+
+if (pattern = Pattern.find_by(name: DRESSED)) && pattern.colorways.none?
+  palette = Pandatone::Palette.new(
+    id: 1, name: "Deck Chair, in four",
+    colors: [
+      [ "Signal red", "#C1272D" ], [ "Cream", "#FAF8F4" ],
+      [ "Ink", "#12120F" ], [ "Gold", "#E3B505" ]
+    ].each_with_index.map do |(name, hex), index|
+      Pandatone::Color.new(
+        id: index, name: name, hex: hex,
+        red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16)
+      )
+    end
+  )
+
+  colorway = Colorway.create!(pattern: pattern, palette: palette)
+  colorway.bind(pattern.values.second, kind: :assigned_slot, slot: 0)
+  colorway.bind(pattern.values.last, kind: :random, subset: [ 1, 3 ], seed: 3)
+
+  puts "Dressed #{DRESSED} in #{palette.name}."
+end
+
 puts "Composed #{Pattern.count} patterns."

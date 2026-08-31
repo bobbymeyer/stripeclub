@@ -111,3 +111,32 @@
   vertical-align: middle;
   margin-inline-end: var(--space-1);
 }
+
+/* --- Slots -------------------------------------------------------------
+   A slot bound to its rank shows the step of the ladder it sits on. A slot
+   bound to a rule is hatched, because its rank has stopped deciding anything
+   and a swatch still showing one would be showing something the colorway no
+   longer reads.
+
+   Never the only signal: every table using these names the rule in the column
+   beside it. */
+.slot-swatch {
+  display: inline-block;
+  width: var(--space-3);
+  height: var(--space-3);
+  border: var(--rule-hair) solid var(--rule-strong);
+  vertical-align: baseline;
+  margin-inline-end: var(--space-1);
+}
+
+.slot-swatch--ruled {
+  background: var(--paper);
+  background-image: repeating-linear-gradient(
+    45deg, var(--ink-quiet) 0 1px, transparent 1px 4px
+  );
+}
+
+.colorway h2 {
+  font-size: var(--size-2);
+  margin-block-end: var(--space-2);
+}
