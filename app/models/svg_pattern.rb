@@ -39,23 +39,38 @@ class SvgPattern
   # ValueScale for a pattern that has not been given a palette yet. The
   # renderer draws structure and asks for fills; which of the two it was
   # handed is not its business.
-  def initialize(dressing, period: PERIOD, size: SIZE, id: nil)
+  # `width` and `height` override the square preview: a standalone tile is
+  # exactly one tile across, so that whatever repeats it gets the repeat and
+  # not a picture of several.
+  #
+  # `title` and `desc` are the two things an SVG file says about itself. A
+  # tile leaving the application is read by people and by tools that are not
+  # this one, and "does this tile?" is the question about it worth answering
+  # in the file rather than only on the page it was downloaded from.
+  def initialize(dressing, period: PERIOD, size: SIZE, id: nil, width: nil, height: nil, title: nil, desc: nil)
     @dressing = dressing
     @period = period
-    @size = size
+    @width = width || size
+    @height = height || size
     @id = id || dressing.svg_id
+    @title, @desc = title, desc
   end
 
   def to_s
     raise NothingToDraw, "the pattern has slots this colorway's palette cannot fill" if @dressing.invalidated?
 
     tag.svg(
-      safe_join([ tag.defs(definitions), surface ]),
-      xmlns: NAMESPACE, width: @size, height: @size, viewBox: "0 0 #{@size} #{@size}"
+      safe_join([ *described, tag.defs(definitions), surface ]),
+      xmlns: NAMESPACE, width: number(@width), height: number(@height),
+      viewBox: "0 0 #{number(@width)} #{number(@height)}"
     )
   end
 
   private
+    def described
+      [ (tag.title(@title) if @title), (tag.desc(@desc) if @desc) ].compact
+    end
+
     def definitions
       rows.any? ? banded : plain
     end

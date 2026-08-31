@@ -27,6 +27,12 @@ gem "stimulus-rails"
 # [https://github.com/bobbymeyer/its-swiss]
 gem "its-swiss", github: "bobbymeyer/its-swiss", branch: "main"
 
+# Writing the PNG tile. Pure Ruby, so there is nothing to build and nothing
+# native to keep working — and the rasterising is ours anyway: a stripe
+# pattern is a function of position, so the tile is that function sampled.
+# [https://github.com/wvanbergen/chunky_png]
+gem "chunky_png"
+
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 

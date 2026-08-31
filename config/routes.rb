@@ -31,6 +31,11 @@ Rails.application.routes.draw do
     # table that lays them out, and a form is not allowed to be a child of a
     # tbody — the browser lifts it out and the table comes apart.
     resource :rows, only: %i[ create update destroy ], module: :patterns, as: :row_block
+
+    # One tile, as a file. `.svg` for the geometry and `.png` for the raster,
+    # `?colorway=` to have it dressed, `?scale=` to say how many pixels a unit
+    # of the tile is worth.
+    resource :tile, only: :show, module: :patterns
   end
 
   root "patterns#index"

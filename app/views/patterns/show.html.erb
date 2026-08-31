@@ -98,11 +98,12 @@
   <% end %>
 
   <section class="rows">
-    <%= form_with url: pattern_row_block_path(@pattern), method: :patch do |form| %>
+    <% if @pattern.rowed? %>
+      <%= form_with url: pattern_row_block_path(@pattern), method: :patch do |form| %>
       <table class="table">
         <caption>
           Rows are the vertical seam: a stripe at an angle has no vertical period of its own,
-          and the band boundaries supply one. Optional — a pattern without them is a pattern.
+          and the band boundaries supply one.
         </caption>
         <thead>
           <tr>
@@ -131,9 +132,13 @@
         </tbody>
       </table>
 
-      <% if @pattern.rowed? %>
         <%= form.submit "Save rows", class: "button" %>
       <% end %>
+    <% else %>
+      <p class="hint">
+        No rows. Optional — a pattern without them is a pattern, and they are what lets an
+        axis-aligned tile carry an angle it otherwise could not.
+      </p>
     <% end %>
 
     <div class="run">
@@ -156,8 +161,9 @@
   <section class="tiling">
     <table class="table tiling__modes">
       <caption>
-        Whether the repeat closes on itself, per output mode. A status and not a rule —
-        nothing here refuses to render.
+        Whether the repeat closes on itself, per output mode, <strong>on a square tile</strong>.
+        A status and not a rule — nothing here refuses to render, and an export free to choose
+        its own shape closes at any angle.
       </caption>
       <thead>
         <tr><th scope="col">Output</th><th scope="col">Tiling</th></tr>
@@ -178,6 +184,33 @@
     <% unless unbroken.seamless? %>
       <%= button_to "Snap to #{unbroken.fitted_angle.round(3)}°",
             pattern_tiling_path(@pattern), method: :patch, class: "button" %>
+    <% end %>
+  </section>
+
+  <section class="export">
+    <% tile = Tile.new(ValueScale.new(@pattern), period: SvgPattern::PERIOD) %>
+    <p class="hint">
+      One tile, <%= tile.width.round(2) %> × <%= tile.height.round(2) %>, for whatever is going to
+      repeat it. Free to choose its own size, a tile always closes — the constraint only bites
+      when the size is fixed, which is what Snap To Tiling is for.
+    </p>
+
+    <div class="run">
+      <%= link_to "Tile, SVG", pattern_tile_path(@pattern, format: :svg), class: "button button--quiet" %>
+      <%= link_to "Tile, PNG", pattern_tile_path(@pattern, format: :png, scale: 4),
+            class: "button button--quiet" %>
+      <%= link_to "Reference form", pattern_tile_path(@pattern, format: :svg, form: "reference"),
+            class: "button button--quiet" %>
+    </div>
+
+    <% @pattern.colorways.reject(&:invalidated?).each do |colorway| %>
+      <div class="run">
+        <span class="hint"><%= colorway.snapshot.palette_name %></span>
+        <%= link_to "SVG", pattern_tile_path(@pattern, format: :svg, colorway: colorway.id),
+              class: "button button--quiet" %>
+        <%= link_to "PNG", pattern_tile_path(@pattern, format: :png, colorway: colorway.id, scale: 4),
+              class: "button button--quiet" %>
+      </div>
     <% end %>
   </section>
 

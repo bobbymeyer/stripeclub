@@ -17,6 +17,28 @@ class Pandatone::Color
     @red, @green, @blue = red, green, blue
   end
 
+  # The three channels, whichever way this colour arrived. Pandatone sends
+  # both spellings and they agree; a colour built from a hex alone — a value
+  # scale's gray, or a snapshot of one — has only the hex.
+  def channels
+    return [ red, green, blue ] if red && green && blue
+
+    hex.to_s.delete_prefix("#").scan(/\h{2}/).map { |pair| pair.to_i(16) }
+  end
+
+  # A value object, so two readings of the same colour are the same colour.
+  # Identity and value together: two palettes can hold the same hex under
+  # different ids, and for anything that names a position those are not
+  # interchangeable.
+  def ==(other)
+    other.is_a?(Pandatone::Color) && id == other.id && hex == other.hex
+  end
+  alias eql? ==
+
+  def hash
+    [ id, hex ].hash
+  end
+
   # Measured here, not fetched: Pandatone stores colour and says in as many
   # words that the brightness it keeps is not perceptual.
   #

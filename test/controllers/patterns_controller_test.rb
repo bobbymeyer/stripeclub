@@ -291,6 +291,17 @@ class PatternsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form table.table tbody tr", 2
   end
 
+  test "a pattern offers its tile in both forms and its colorway in both" do
+    colorway = colorway_for("Exported", %w[ #FAF8F4 #12120F ])
+
+    get pattern_path(colorway.pattern)
+
+    assert_select "section.export a[href=?]", pattern_tile_path(colorway.pattern, format: :svg)
+    assert_select "section.export a[href*=?]", "format=png", false
+    assert_select "section.export a[href=?]",
+      pattern_tile_path(colorway.pattern, format: :svg, colorway: colorway.id)
+  end
+
   private
     # A colorway built from a palette written out here rather than fetched.
     # Choosing a palette needs Pandatone; everything after the choosing does
