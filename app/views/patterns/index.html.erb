@@ -1,0 +1,39 @@
+<% content_for :title, "Patterns" %>
+<% content_for :main_class, "grid" %>
+
+<header class="page-head run">
+  <h1>Patterns</h1>
+  <%= link_to "Compose a pattern", new_pattern_path, class: "button button--primary" %>
+</header>
+
+<% if @patterns.any? %>
+  <table class="table patterns">
+    <caption>Every pattern, by name. Drawn in value: none of these has been given a palette.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Pattern</th>
+        <th scope="col">Repeat</th>
+        <th scope="col" class="numeric">Slots</th>
+        <th scope="col">Angle</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @patterns.each do |pattern| %>
+        <tr>
+          <td><%= link_to pattern.name, pattern %></td>
+          <td><%= pattern_preview pattern, size: 96, period: 24, class: "preview--inline" %></td>
+          <td class="numeric"><%= pattern.slot_count %></td>
+          <td><%= angle_in_words(pattern) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= render "shared/pagination",
+        page: @page, pages: @pages, url: ->(number) { patterns_path(page: number) } %>
+<% else %>
+  <p class="empty">
+    No patterns yet. A pattern is structure — how many slots, how wide each stripe,
+    in what order, at what angle — and carries no colour at all.
+  </p>
+<% end %>

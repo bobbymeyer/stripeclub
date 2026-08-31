@@ -1,0 +1,30 @@
+<%# Stripeclub's own pagination, and it should not have to be.
+
+    its_swiss/shared/_pagination renders exactly this markup and cannot be
+    used. Its documentation comment contains a worked example written in ERB,
+    and the closing delimiter of that example ends the comment early — so the
+    remaining prose is emitted as page content. "Long runs are elided around
+    the current page, because a hundred numbers is not a control." appeared
+    above the page numbers, with a stray delimiter after it.
+
+    Writing this note cost the same mistake twice: a comment describing the
+    bug cannot quote the syntax that causes it. Hence no example here.
+
+    This is the library's markup, copied, with nothing changed but the comment
+    that broke it. Delete this file and render the library's partial again as
+    soon as the gem is fixed. See ITS-SWISS-CANDIDATES.md.
+%>
+<% numbers = its_swiss_page_numbers(page, pages, window: local_assigns.fetch(:window, 2)) %>
+<% if pages > 1 %>
+  <nav class="pagination" aria-label="<%= local_assigns.fetch(:label, "Pages") %>">
+    <% numbers.each do |number| %>
+      <% if number.nil? %>
+        <span class="pagination__gap" aria-hidden="true">…</span>
+      <% elsif number == page %>
+        <span aria-current="page"><%= number %></span>
+      <% else %>
+        <%= link_to number, url.call(number) %>
+      <% end %>
+    <% end %>
+  </nav>
+<% end %>

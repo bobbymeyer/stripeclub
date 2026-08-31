@@ -1,0 +1,7 @@
+<% content_for :title, "Compose a pattern" %>
+
+<header class="page-head">
+  <h1>Compose a pattern</h1>
+</header>
+
+<%= render "form", pattern: @pattern, submit_label: "Compose", cancel_to: patterns_path %>

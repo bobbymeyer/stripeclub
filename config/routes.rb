@@ -13,6 +13,13 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  resources :patterns do
+    # "+" and "−". A slot is added and removed, never edited and never set to
+    # a number: adding one preserves the composition and removing one is
+    # refused while a stripe still draws it, and neither of those survives
+    # being spelled as an update to a count.
+    resource :slot, only: %i[ create destroy ], module: :patterns
+  end
+
+  root "patterns#index"
 end

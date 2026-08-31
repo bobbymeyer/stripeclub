@@ -1,0 +1,56 @@
+<% content_for :title, @pattern.name %>
+<% content_for :main_class, "grid" %>
+
+<header class="page-head run">
+  <h1><%= @pattern.name %></h1>
+  <%= link_to "Rename", edit_pattern_path(@pattern), class: "button button--quiet" %>
+</header>
+
+<figure class="preview-figure">
+  <%= pattern_preview @pattern, size: 320, period: 80 %>
+  <figcaption>
+    Drawn in value, paper to ink. No palette has been chosen, and the pattern is
+    complete without one.
+  </figcaption>
+</figure>
+
+<div class="detail stack">
+  <dl class="pairs">
+    <dt>Slots</dt>
+    <dd><%= pluralize @pattern.slot_count, "value" %>, ranked from the ground</dd>
+
+    <dt>Angle</dt>
+    <dd><%= angle_in_words @pattern %></dd>
+
+    <dt>Repeat</dt>
+    <dd><%= pluralize @pattern.sequence.stripes.size, "stripe" %>, summing to one</dd>
+  </dl>
+
+  <table class="table">
+    <caption>The repeat, in order along the stripe normal.</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="numeric ordinal">#</th>
+        <th scope="col">Draws</th>
+        <th scope="col" class="numeric">Width</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @pattern.sequence.stripes.each_with_index do |stripe, index| %>
+        <tr>
+          <td class="numeric ordinal"><%= index + 1 %></td>
+          <td><%= slot_name stripe.value %></td>
+          <td class="numeric"><%= number_to_percentage stripe.width * 100, precision: 2 %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <div class="run">
+    <%= button_to "Add a slot", pattern_slot_path(@pattern), class: "button" %>
+    <%= button_to "Remove the last", pattern_slot_path(@pattern), method: :delete,
+          class: "button button--quiet" %>
+    <%= button_to "Take away", @pattern, method: :delete, class: "button button--danger",
+          form: { data: { turbo_confirm: "Take #{@pattern.name} away for good?" } } %>
+  </div>
+</div>

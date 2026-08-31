@@ -1,0 +1,94 @@
+/* Stripeclub's own components: the things its-swiss has no business knowing
+ * about, because they are what this application is rather than what it looks
+ * like.
+ *
+ * Unlayered, like theme.css, so everything here beats the library without
+ * having to out-specify it.
+ */
+
+/* --- The preview -------------------------------------------------------
+   The one place colour belongs. A pattern is content here, not chrome, so it
+   gets a hairline and nothing else — no shadow, no rounding, no frame that
+   competes with what is inside it. */
+.preview {
+  border: var(--rule-hairline, 1px) solid var(--rule);
+  background: var(--paper);
+}
+
+.preview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* In a table cell the preview is a sample, not a subject: small, fixed, and
+   sitting on the row's baseline rather than setting the row's height. */
+.preview--inline {
+  width: 6rem;
+}
+
+.preview-figure {
+  margin: 0;
+}
+
+.preview-figure figcaption {
+  padding-block-start: var(--space-2);
+  color: var(--ink-quiet);
+  font-size: var(--size-1);
+  max-width: var(--measure);
+}
+
+/* --- Corrections to the library ----------------------------------------
+   Kept together and named, because each is a candidate for its-swiss rather
+   than something Stripeclub wanted. See ITS-SWISS-CANDIDATES.md. */
+
+/* its-swiss writes `.table .numeric { padding-inline: var(--space-3) 0 }`,
+   which zeroes the end padding of every numeric cell and not only the last
+   one. That is right for a figure in the final column and wrong anywhere
+   else: the next column's text starts exactly where the number ends, and
+   "Slots" and "Angle" rendered as one word. The library's own :last-child
+   rule still zeroes the column that really is last. */
+.table .numeric:not(:last-child) { padding-inline-end: var(--space-3); }
+
+/* --- Page furniture ---------------------------------------------------- */
+.page-head {
+  justify-content: space-between;
+  align-items: baseline;
+  padding-block-end: var(--space-3);
+}
+
+.page-head h1 {
+  margin: 0;
+}
+
+/* The patterns table carries a drawing in one of its columns, so that column
+   is sized and the rest take what is left.
+
+   Baseline alignment is right for a table of text and wrong for this one: the
+   drawing is six lines tall, and a name aligned to its baseline sits at the
+   foot of the row instead of beside the thing it names. That is the
+   application's business — a library cannot know a cell holds a picture. */
+.patterns td { vertical-align: middle; }
+
+.patterns td:nth-child(2),
+.patterns th:nth-child(2) { width: 7rem; }
+
+.patterns td:nth-child(3),
+.patterns th:nth-child(3) { width: 4rem; }
+
+.patterns td:nth-child(4),
+.patterns th:nth-child(4) { width: 8rem; }
+
+.footer__note {
+  color: var(--ink-quiet);
+  font-size: var(--size-1);
+  max-width: var(--measure);
+}
+
+.footer__tool {
+  color: var(--ink);
+}
+
+/* The stripe number is an ordinal, not a measurement: it wants to be narrow
+   and out of the way of the two columns that carry the answer. */
+.ordinal { width: 2.5rem; }

@@ -1,28 +1,35 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title><%= content_for(:title) || "Stripeclub" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Stripeclub">
-    <meta name="mobile-web-app-capable" content="yes">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
+<%#
+  Stripeclub's layout: the slots its-swiss leaves open, filled once, and then
+  the library's shell.
 
-    <%= yield :head %>
+  A nested layout rather than `layout "its_swiss/shell"` on the controller.
+  The shell is written to be filled through `content_for` — the mark, the nav,
+  anything else belonging in <head> — and a layout named on a controller
+  leaves nowhere to do that except every view in turn.
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+  The head slot is where the application's own stylesheets go, and they have
+  to go somewhere: the shell writes the six links the library ships and stops.
+  Being yielded before them costs nothing, because everything its-swiss ships
+  is inside a cascade layer and everything here is not — an unlayered rule
+  beats a layered one whatever order they arrive in.
+%>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "theme", "stripeclub", "data-turbo-track": "reload" %>
+<% end %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+<% content_for :mark do %>
+  <%= link_to "Stripeclub", root_path %>
+<% end %>
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-  </head>
+<% content_for :nav do %>
+  <%= nav_link_to "Patterns", patterns_path, current: controller_name == "patterns" %>
+<% end %>
 
-  <body>
-    <%= yield %>
-  </body>
-</html>
+<% content_for :footer do %>
+  <p class="footer__note">
+    Patterns are structure and carry no colour.
+    Colour arrives from <span class="footer__tool">Pandatone</span> as a rule, never as a list.
+  </p>
+<% end %>
+
+<%= render template: "layouts/its_swiss/shell" %>

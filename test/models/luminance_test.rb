@@ -48,6 +48,26 @@ class LuminanceTest < ActiveSupport::TestCase
     assert_in_delta 0.18, Luminance.of_hex("#12120F"), 0.005
   end
 
+  # The inverse, for neutrals only: given a lightness, the gray that measures
+  # it. Round-tripping is the whole test — a gray that does not measure back
+  # to the lightness it was asked for is not that lightness.
+  test "a gray measures back to the lightness it was asked for" do
+    [ 0.18, 0.40, 0.6, 0.8, 0.98 ].each do |lightness|
+      assert_in_delta lightness, Luminance.of_hex(Luminance.gray(lightness)), 0.004,
+        "gray(#{lightness}) came back as something else"
+    end
+  end
+
+  test "the ends of the scale are the ends of the range" do
+    assert_equal "#FFFFFF", Luminance.gray(1.0)
+    assert_equal "#000000", Luminance.gray(0.0)
+  end
+
+  test "a lightness outside the range is brought back into it" do
+    assert_equal "#FFFFFF", Luminance.gray(1.4)
+    assert_equal "#000000", Luminance.gray(-0.2)
+  end
+
   test "a hex is read in either spelling" do
     assert_equal Luminance.of(255, 255, 0), Luminance.of_hex("#FFFF00")
     assert_equal Luminance.of(255, 255, 0), Luminance.of_hex("ffff00")

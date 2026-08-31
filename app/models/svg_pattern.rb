@@ -27,15 +27,19 @@ class SvgPattern
   # size anyone will render. Past that the numbers are noise in the file.
   PLACES = 4
 
-  def initialize(colorway, period: PERIOD, size: SIZE, id: nil)
-    @colorway = colorway
+  # `dressing` is whatever says what colour each value is: a Colorway, or a
+  # ValueScale for a pattern that has not been given a palette yet. The
+  # renderer draws structure and asks for fills; which of the two it was
+  # handed is not its business.
+  def initialize(dressing, period: PERIOD, size: SIZE, id: nil)
+    @dressing = dressing
     @period = period
     @size = size
-    @id = id || "stripeclub-colorway-#{colorway.id}"
+    @id = id || dressing.svg_id
   end
 
   def to_s
-    raise NothingToDraw, "the pattern has slots this colorway's palette cannot fill" if @colorway.invalidated?
+    raise NothingToDraw, "the pattern has slots this colorway's palette cannot fill" if @dressing.invalidated?
     raise UnsupportedAngle, "#{angle} is not an axis" unless axis_aligned?
 
     tag.svg(
@@ -84,15 +88,15 @@ class SvgPattern
     end
 
     def fill_for(stripe)
-      @colorway.color_for(stripe.value).hex
+      @dressing.color_for(stripe.value).hex
     end
 
     def stripes
-      @stripes ||= @colorway.pattern.sequence.stripes.to_a
+      @stripes ||= @dressing.pattern.sequence.stripes.to_a
     end
 
     def angle
-      @colorway.pattern.angle
+      @dressing.pattern.angle
     end
 
     def vertical?

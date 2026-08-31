@@ -56,6 +56,12 @@ class Colorway < ApplicationRecord
     snapshot.palette.ranked[rank_for(value.position)]
   end
 
+  # What the renderer names the `<pattern>` element, so two previews can sit
+  # on one page without one filling itself from the other.
+  def svg_id
+    "stripeclub-colorway-#{id}"
+  end
+
   def drifted_from?(palette)
     snapshot.present? && snapshot.drifted_from?(palette)
   end

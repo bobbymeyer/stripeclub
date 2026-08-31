@@ -18,8 +18,14 @@ gem "stimulus-rails"
 # The Swiss typographic style this application is dressed in: tokens, reset,
 # type, grid primitives and components. Everything it ships sits in a cascade
 # layer, so app/assets/stylesheets wins without out-specifying it.
+#
+# Tracked from the repository rather than pinned to a release. Stripeclub is
+# the second consumer the gem's boundary was waiting for, so the two are being
+# developed against each other: `bundle update its-swiss` takes the newest
+# main, and the lockfile records the exact commit it took. Pin `~> 0.x` when
+# the surface stops moving.
 # [https://github.com/bobbymeyer/its-swiss]
-gem "its-swiss", "~> 0.1"
+gem "its-swiss", github: "bobbymeyer/its-swiss", branch: "main"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"

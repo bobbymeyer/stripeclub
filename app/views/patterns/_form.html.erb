@@ -1,0 +1,17 @@
+<%= its_swiss_form_with model: pattern, class: "form measure" do |form| %>
+  <%= render "its_swiss/shared/errors", record: pattern %>
+
+  <%= form.text_field :name, hint: "What this structure is called. It says nothing about colour." %>
+
+  <% if pattern.new_record? %>
+    <%= form.number_field :slot_count, min: 1,
+          hint: "How many values the structure has. Slot 0 is the ground. Change it later with + and −." %>
+  <% end %>
+
+  <%= form.select :angle, angle_choices %>
+
+  <div class="run">
+    <%= form.submit submit_label %>
+    <%= link_to "Cancel", cancel_to, class: "button button--quiet" %>
+  </div>
+<% end %>

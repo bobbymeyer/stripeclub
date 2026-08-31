@@ -40,5 +40,31 @@
 /* The grid itself lives here, not in the gem: which blocks span which fields
    is what this application looks like.
 
-   main.grid > .page-head { --span: 4; }
-*/
+   Six fields, and one page that needs them: a pattern beside what is true
+   about it. The drawing takes two and the description four, because the
+   drawing is square and a square two fields wide is already taller than the
+   list beside it — giving it three would push the repeat off the fold on a
+   laptop and leave the description at a measure too short to read.
+
+   Everything else on every other page runs the whole field, which is what
+   .grid does when a child says nothing. */
+main.grid > .page-head { --span: 6; }
+
+/* The index is a list of names against small drawings, and none of its four
+   columns wants width. Run the whole field and the name column takes the
+   slack — eight hundred pixels of it before the drawing starts. Four fields
+   is where the name and the thing it names are still near each other. */
+main.grid > .patterns,
+main.grid > .pagination { --span: 4; }
+
+main.grid > .preview-figure { --span: 2; }
+main.grid > .detail { --span: 4; }
+
+/* Below the fold of a phone there are no six fields to divide, so the two
+   blocks stack and each takes what there is. The breakpoint is the measure
+   plus the page's own inset either side — the width at which a four-field
+   column stops being a readable measure — rather than a device. */
+@media (max-width: 40rem) {
+  main.grid > .preview-figure,
+  main.grid > .detail { --span: 6; }
+}

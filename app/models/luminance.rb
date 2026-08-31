@@ -38,6 +38,23 @@ module Luminance
     of(*digits.scan(/\h{2}/).map { |pair| pair.to_i(16) })
   end
 
+  # The inverse, for neutrals: the gray that measures a given lightness.
+  #
+  # Only neutrals, and that is what makes it a few lines rather than a colour
+  # space conversion. A gray has its three channels equal, so its three cone
+  # responses are equal too, and the whole of `of` collapses to one cube root
+  # times the sum of the three weights — which is the same 0.99999999347 that
+  # white comes out at. Inverting that is a cube and a gamma.
+  def gray(lightness)
+    linear = (lightness.clamp(0.0, 1.0) / WHITE)**3
+    channel = (delinearize(linear) * 255).round.clamp(0, 255)
+
+    format("#%02X%02X%02X", *([ channel ] * 3))
+  end
+
+  # What `of` returns for white. Not one — see the note in the test.
+  WHITE = 0.2104542553 + 0.7936177850 - 0.0040720468
+
   # The inverse of the transfer function sRGB stores its channels through.
   def linearize(channel)
     value = channel / 255.0
@@ -45,4 +62,9 @@ module Luminance
     value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055)**2.4
   end
   private_class_method :linearize
+
+  def delinearize(value)
+    value <= 0.0031308 ? value * 12.92 : (1.055 * value**(1 / 2.4)) - 0.055
+  end
+  private_class_method :delinearize
 end
