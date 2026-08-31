@@ -25,10 +25,18 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert hrefs.any? { |href| href.include?("stripeclub") }, "the domain components are missing"
   end
 
-  test "the masthead marks the destination you are at" do
-    get patterns_path
+  # Every one of these is still Patterns, however the controller is named:
+  # dressing one is Patterns::ColorwaysController, whose controller_name is
+  # "colorways". The library passes `current` in rather than working it out
+  # because only the application knows that.
+  test "the masthead marks the destination you are at, wherever in it you are" do
+    [ patterns_path, pattern_path(@pattern), new_pattern_path,
+      new_pattern_colorway_path(@pattern) ].each do |path|
+      get path
 
-    assert_select "nav.nav a[aria-current=?]", "page", text: "Patterns"
+      assert_select "nav.nav a[aria-current=?]", "page", { text: "Patterns" },
+        "#{path} did not mark the destination"
+    end
   end
 
   test "a page titles itself and the application names the rest" do

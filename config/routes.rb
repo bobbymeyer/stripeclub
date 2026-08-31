@@ -41,6 +41,15 @@ Rails.application.routes.draw do
     # or is clean, and the three effects are set together because they are
     # looked at together.
     resource :imperfection, only: %i[ update destroy ], module: :patterns
+
+    # Dressing a pattern. `new` is the palette picker — Pandatone's catalogue,
+    # fetched once and filtered here — and `create` takes the snapshot.
+    resources :colorways, only: %i[ new create destroy ], module: :patterns do
+      # Whether Pandatone's palette has moved since the snapshot was taken.
+      # Asked for rather than checked on every page load: it is a round trip,
+      # and drift is news rather than weather.
+      patch :drift, on: :member
+    end
   end
 
   # The API is versioned from the first commit: other tools depend on this

@@ -64,7 +64,12 @@ end
 # One colorway, from a palette written out here rather than fetched.
 #
 # Choosing a palette is Pandatone's part and needs PANDATONE_URL set;
-# everything after the choosing is Stripeclub's and needs nothing. The palette
+# everything after the choosing is Stripeclub's and needs nothing.
+#
+# The palette ids are negative on purpose. Pandatone's are positive, so these
+# cannot collide with a real one — a seeded colorway asked to check itself for
+# drift then says the palette is gone, which is true, rather than comparing
+# itself against whatever Pandatone happens to have at id 1. The palette
 # is stored out of its rank order on purpose — it ranks cream, gold, red, ink
 # — so the three rules that read a position and the one that reads a rank are
 # telling apart on sight.
@@ -72,7 +77,7 @@ DRESSED = "Deck Chair".freeze
 
 if (pattern = Pattern.find_by(name: DRESSED)) && pattern.colorways.none?
   palette = Pandatone::Palette.new(
-    id: 1, name: "Deck Chair, in four",
+    id: -1, name: "Deck Chair, in four",
     colors: [
       [ "Signal red", "#C1272D" ], [ "Cream", "#FAF8F4" ],
       [ "Ink", "#12120F" ], [ "Gold", "#E3B505" ]
@@ -105,7 +110,7 @@ if (pattern = Pattern.find_or_create_by!(name: "Rêve & Bloom") { |new_pattern|
     pattern.sequence.stripes[index].update_column(:width, width)
   end
 
-  palette = Pandatone::Palette.new(id: 9, name: "Rêve & Bloom", colors: [
+  palette = Pandatone::Palette.new(id: -2, name: "Rêve & Bloom", colors: [
     [ "Cream", "#F4EFE4" ], [ "Rose", "#D98BA0" ], [ "Sage", "#8FA68E" ],
     [ "Terracotta", "#C4714F" ], [ "Plum", "#6B4C63" ]
   ].each_with_index.map do |(name, hex), index|

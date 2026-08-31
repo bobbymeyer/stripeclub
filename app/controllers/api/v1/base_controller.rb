@@ -20,7 +20,7 @@ module Api
         # sessions to accept, and accepting one would be how every page on the
         # internet gets to drive this API from a signed-in browser.
         def authenticate_client
-          return render_unconfigured if Rails.env.production? && configured_token.blank?
+          return render_unconfigured if configured_token.blank? && token_required?
           return if configured_token.blank?
 
           render_unauthorized unless ActiveSupport::SecurityUtils.secure_compare(
@@ -37,6 +37,10 @@ module Api
 
         def configured_token
           Rails.application.config.x.api.token
+        end
+
+        def token_required?
+          Rails.application.config.x.api.required
         end
 
         def render_unauthorized

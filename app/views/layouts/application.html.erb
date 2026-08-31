@@ -22,7 +22,14 @@
 <% end %>
 
 <% content_for :nav do %>
-  <%= nav_link_to "Patterns", patterns_path, current: controller_name == "patterns" %>
+  <%#
+    controller_path rather than controller_name: dressing a pattern and
+    editing its rows are Patterns::ColorwaysController and
+    Patterns::RowsController, whose names are "colorways" and "rows". The
+    library passes `current` in rather than working it out precisely because
+    only the application knows that all of these are still Patterns.
+  %>
+  <%= nav_link_to "Patterns", patterns_path, current: controller_path.start_with?("patterns") %>
 <% end %>
 
 <% content_for :footer do %>

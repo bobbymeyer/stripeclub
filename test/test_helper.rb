@@ -32,6 +32,43 @@ module ActiveSupport
       pattern.sequence.tap { |sequence| sequence.stripes.reload }
     end
 
+    # Pandatone, configured and answering.
+    #
+    # Stubbed at the wire rather than below it: what is worth testing about
+    # reaching another tool is the request as it goes out and the shape that
+    # comes back, and a fake client tests neither.
+    def with_pandatone(palettes: {}, url: "https://pandatone.test", token: "sekrit")
+      stub_request(:get, "#{url}/api/v1/palettes")
+        .to_return(body: palettes.keys.map { |id, name| { id: id, name: name, tags: [] } }.to_json,
+          headers: { "Content-Type" => "application/json" })
+
+      palettes.each { |(id, name), hexes| stub_palette(url, id, name, hexes) }
+
+      was = Rails.application.config.x.pandatone.to_h
+      Rails.application.config.x.pandatone.url = url
+      Rails.application.config.x.pandatone.token = token
+      Pandatone::Catalog.forget!
+
+      yield
+    ensure
+      Rails.application.config.x.pandatone.url = was[:url]
+      Rails.application.config.x.pandatone.token = was[:token]
+      Pandatone::Catalog.forget!
+    end
+
+    def stub_palette(url, id, name, hexes)
+      colors = hexes.each_with_index.map do |hex, index|
+        {
+          id: (id * 100) + index, name: "#{name.parameterize}-#{index}", hex: hex,
+          rgb: { r: hex[1..2].to_i(16), g: hex[3..4].to_i(16), b: hex[5..6].to_i(16) }, tags: []
+        }
+      end
+
+      stub_request(:get, "#{url}/api/v1/palettes/#{id}")
+        .to_return(body: { id: id, name: name, tags: [], colors: colors }.to_json,
+          headers: { "Content-Type" => "application/json" })
+    end
+
     # A palette shaped the way Pandatone sends them, built from hexes because
     # the hex is the only part of a colour these tests are ever about.
     def pandatone_palette(*hexes, id: 7, name: "Sample")

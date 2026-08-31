@@ -118,9 +118,28 @@ bin/rails server
 
 `/its-swiss/specimen` in development renders every component the gem ships.
 
-Choosing a palette is Pandatone's part and wants `PANDATONE_URL` and
-`PANDATONE_TOKEN`. Everything after the choosing needs neither, and the seeds
-dress two patterns from palettes written out in the file.
+### Dressing a pattern
+
+Composing needs nothing from Pandatone. Choosing a palette does:
+
+```sh
+cd ../pandatone && bin/rails server -p 3222   # its API token is on /account
+PANDATONE_URL=http://127.0.0.1:3222 PANDATONE_TOKEN=… bin/rails server
+```
+
+The picker fetches the catalogue once, holds it for five minutes, and filters
+it here — palettes with fewer colours than the pattern has slots are demoted
+rather than hidden, because taking a slot away with − brings them back into
+range. Palettes are shown as the grays of their own lightness: the preview is
+where colour belongs, and what a palette is for here is how its values are
+spread.
+
+Choosing takes a snapshot. What Pandatone does to that palette afterwards is
+drift — reported when you ask for it and never applied, because a design that
+was finished should not change because someone else opened another tool.
+
+Without either variable set, every page still works except the picker, which
+says so.
 
 ## Tests
 

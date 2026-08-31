@@ -5,6 +5,29 @@
 # behind a slot-count slider would make the answer arrive after the next
 # question. One fetch, and the filters are array work.
 class Pandatone::Catalog
+  # How long a fetched catalogue stands before it is asked for again.
+  #
+  # Held in the process rather than in Rails.cache: it is a handful of value
+  # objects for one person's tool, the development cache store is a null store
+  # unless someone has turned it on, and a catalogue that silently did nothing
+  # would look exactly like one that worked. Another process fetches its own,
+  # which costs one round of requests and cannot go stale differently.
+  CACHE_FOR = 5.minutes
+
+  class << self
+    def current(client = Pandatone::Client.configured)
+      forget! if @fetched_at.nil? || @fetched_at < CACHE_FOR.ago
+
+      @current ||= new(client).tap { @fetched_at = Time.current }
+    end
+
+    # What "refresh from Pandatone" does, and what a colorway checking itself
+    # for drift wants first.
+    def forget!
+      @current = @fetched_at = nil
+    end
+  end
+
   def self.fetch(client = Pandatone::Client.configured)
     new(client)
   end

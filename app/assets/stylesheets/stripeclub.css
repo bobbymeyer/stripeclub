@@ -176,3 +176,43 @@
   gap: var(--space-3);
   padding-block-end: var(--space-3);
 }
+
+/* --- The palette picker ------------------------------------------------
+   A palette's colours in luminance rank, drawn as the grays of their own
+   lightness. Colour belongs in the preview; what a palette is for here is the
+   spread of its values, and hues hide that. */
+.palette-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.palette-strip li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.palette-swatch {
+  display: block;
+  width: var(--space-4);
+  height: var(--space-4);
+  border: var(--rule-hair) solid var(--rule-strong);
+}
+
+.palette-swatch__name {
+  font-size: var(--size-0, 0.75rem);
+  color: var(--ink-quiet);
+  max-width: 6rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.palettes h2 {
+  font-size: var(--size-2);
+  margin-block: var(--space-4) var(--space-1);
+}

@@ -66,36 +66,49 @@
     </table>
   </section>
 
-  <% if @pattern.colorways.any? %>
-    <section class="colorways stack">
-      <% @pattern.colorways.each do |colorway| %>
-        <article class="colorway">
-          <h2><%= colorway.snapshot.palette_name %></h2>
+  <section class="colorways stack">
+    <div class="run">
+      <%= link_to "Dress this pattern", new_pattern_colorway_path(@pattern), class: "button" %>
+      <span class="hint">
+        Colour arrives from Pandatone as a rule over a snapshot, never as a list of hexes.
+      </span>
+    </div>
 
-          <% if colorway.invalidated? %>
-            <p class="hint">
-              Invalid: the pattern has <%= @pattern.slot_count %> slots and this palette has
-              <%= colorway.snapshot.size %> colours. Kept, not deleted — take a slot away and it comes back.
-            </p>
-          <% else %>
-            <%= pattern_preview colorway, size: 180, period: 45, class: "preview--inline" %>
+    <% @pattern.colorways.each do |colorway| %>
+      <article class="colorway">
+        <h2><%= colorway.snapshot.palette_name %></h2>
 
-            <table class="table">
-              <thead><tr><th scope="col">Slot</th><th scope="col">Rule</th></tr></thead>
-              <tbody>
-                <% @pattern.values.each do |value| %>
-                  <tr>
-                    <td><%= slot_swatch value, colorway: colorway %> <%= slot_name value %></td>
-                    <td><%= rule_name colorway.rule_for(value) %></td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          <% end %>
-        </article>
-      <% end %>
-    </section>
-  <% end %>
+        <% if colorway.invalidated? %>
+          <p class="hint">
+            Invalid: the pattern has <%= @pattern.slot_count %> slots and this palette has
+            <%= colorway.snapshot.size %> colours. Kept, not deleted — take a slot away and it comes back.
+          </p>
+        <% else %>
+          <%= pattern_preview colorway, size: 180, period: 45, class: "preview--inline" %>
+
+          <table class="table">
+            <thead><tr><th scope="col">Slot</th><th scope="col">Rule</th></tr></thead>
+            <tbody>
+              <% @pattern.values.each do |value| %>
+                <tr>
+                  <td><%= slot_swatch value, colorway: colorway %> <%= slot_name value %></td>
+                  <td><%= rule_name colorway.rule_for(value) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+
+        <div class="run">
+          <%= button_to "Check for drift", drift_pattern_colorway_path(@pattern, colorway),
+                method: :patch, class: "button button--quiet" %>
+          <%= button_to "Remove", pattern_colorway_path(@pattern, colorway), method: :delete,
+                class: "button button--quiet" %>
+          <span class="hint">Taken <%= colorway.snapshot.taken_at.to_fs(:long) %></span>
+        </div>
+      </article>
+    <% end %>
+  </section>
 
   <section class="rows">
     <% if @pattern.rowed? %>

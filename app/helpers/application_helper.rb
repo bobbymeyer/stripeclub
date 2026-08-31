@@ -103,6 +103,29 @@ module ApplicationHelper
     end
   end
 
+  # A palette as the picker shows it: its colours in luminance rank, drawn as
+  # the grays of their own lightness.
+  #
+  # Not in their own colours, and that is the handoff's call rather than a
+  # shortcut. The preview is the one place colour belongs, and what a palette
+  # is *for* here is its distribution of value — which is the thing you cannot
+  # see when six hues are shouting. Choose on the ladder, then look at the
+  # preview.
+  def palette_strip(palette)
+    tag.ol(class: "palette-strip") do
+      safe_join(palette.ranked.map { |color| palette_swatch(color) })
+    end
+  end
+
+  def palette_swatch(color)
+    tag.li do
+      safe_join([
+        tag.span(class: "palette-swatch", style: "background: #{Luminance.gray(color.luminance)}"),
+        tag.span(color.name, class: "palette-swatch__name")
+      ])
+    end
+  end
+
   def rule_name(rule)
     {
       "auto_value_match" => "By rank", "assigned_slot" => "Palette slot #{rule.slot}",

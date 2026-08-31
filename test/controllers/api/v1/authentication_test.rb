@@ -45,8 +45,14 @@ class Api::V1::AuthenticationTest < ActionDispatch::IntegrationTest
   # A design tool put on the internet with its API open is not a decision
   # anyone makes on purpose. Failing shut with a legible reason beats both
   # guessing and a stack trace.
-  test "in production with no token configured the api is shut" do
-    in_production do
+  #
+  # Set from Rails.env in the initializer and read as a setting here. Moving
+  # the whole environment under a test to reach this branch reaches much
+  # further than the branch does — cable.yml resolves per environment, and
+  # production's names a gem this application does not bundle, so every
+  # integration test that ran after it in the same process died in setup.
+  test "with a token required and none configured the api is shut" do
+    with_required_token do
       with_token(nil) do
         get api_v1_patterns_url
 
@@ -65,10 +71,11 @@ class Api::V1::AuthenticationTest < ActionDispatch::IntegrationTest
       Rails.application.config.x.api.token = was
     end
 
-    def in_production
-      Rails.env = "production"
+    def with_required_token
+      was = Rails.application.config.x.api.required
+      Rails.application.config.x.api.required = true
       yield
     ensure
-      Rails.env = "test"
+      Rails.application.config.x.api.required = was
     end
 end
