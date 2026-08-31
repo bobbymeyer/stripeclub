@@ -22,10 +22,15 @@ Rails.application.configure do
   # config.asset_host = "http://assets.example.com"
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  # Both of these go on together or neither does. assume_ssl makes Rails trust
+  # X-Forwarded-Proto, and because it marks every request as SSL the force_ssl
+  # redirect middleware never fires -- which is what lets a container
+  # healthcheck speak plain HTTP to localhost without being redirected into a
+  # loop. force_ssl alone would break exactly that.
+  config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  config.force_ssl = true
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
