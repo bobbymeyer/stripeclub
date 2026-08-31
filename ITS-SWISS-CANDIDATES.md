@@ -138,7 +138,35 @@ for a gap later.
 
 ---
 
-## 6. What worked as shipped
+## 6. `.field` is a form's shape, and a table of controls is not a form
+
+The row editor is a table: four small controls per row, five columns, one
+save. Two things in the library are built for the other shape.
+
+`ItsSwiss::FormBuilder` writes a label above its control, down the width of a
+form. In a table the column heading is already the label, and a second copy in
+every cell is read out on every cell.
+
+`.field` is `display: flex; flex-direction: column; width: 100%`. Two related
+controls in one cell — a scale's numerator and denominator — stack, with the
+solidus between them on its own line.
+
+Both are right for a form and neither is wrong here so much as aimed
+elsewhere. Stripeclub keeps the `.field` wrapper so the controls are styled
+like every other control in the application, moves the label off screen with
+the library's own `.visually-hidden`, and lets the cell do the arranging.
+
+`.form--inline` and `.field--inline` are close but not this: both arrange a
+run of fields inside a form, and this is one control inside a cell.
+
+Candidate, weakly: a modifier for a control whose label is elsewhere — the
+`.field` styling with the column flex and the full width dropped. It is three
+lines, and it is the second application to want it only if Pandatone has a
+table of controls somewhere. Recorded rather than assumed.
+
+---
+
+## 7. What worked as shipped
 
 Worth as much as the list above, since the point was to test the boundary:
 
@@ -151,14 +179,16 @@ Worth as much as the list above, since the point was to test the boundary:
   needed a raised specificity or an `!important`. This is the part of the
   design that most needed a second consumer, and it held.
 
-  Note what it did not cover: two of the four findings here are a broken ERB
-  comment and an installer pointing at the wrong layout shape. The cascade
+  Note what it did not cover: three of the five findings here are a broken ERB
+  comment, an installer pointing at the wrong layout shape, and a form builder
+  aimed at a shape this application does not always have. The cascade
   layer is the boundary for *style*, and it works — but a gem that ships
   views, a generator and a form builder has three more surfaces than CSS, and
   those have no equivalent mechanism protecting them.
 - **`.pairs`, `.button`, `.button--quiet`, `.button--danger`, `.empty`,
-  `.run`, `.stack`, `.measure`, `.numeric`, the masthead, the nav's
-  `aria-current`, the flash, the errors partial, the form builder** — all used
-  as documented.
+  `.run`, `.stack`, `.measure`, `.numeric`, `.visually-hidden`, the masthead,
+  the nav's `aria-current`, the flash, the errors partial, and the form
+  builder on every form that is shaped like a form** — all used as
+  documented.
 - **The grid primitives.** Stripeclub declared six columns and two spans and
   got the page it wanted. The gem shipping no grid is the right call.

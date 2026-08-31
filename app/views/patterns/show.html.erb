@@ -97,6 +97,62 @@
     </section>
   <% end %>
 
+  <section class="rows">
+    <%= form_with url: pattern_row_block_path(@pattern), method: :patch do |form| %>
+      <table class="table">
+        <caption>
+          Rows are the vertical seam: a stripe at an angle has no vertical period of its own,
+          and the band boundaries supply one. Optional — a pattern without them is a pattern.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="numeric ordinal">#</th>
+            <th scope="col">Phase</th>
+            <th scope="col">Colour</th>
+            <th scope="col">Scale</th>
+            <th scope="col">Mirrored</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @pattern.rows.each do |row| %>
+            <tr>
+              <td class="numeric ordinal"><%= row.position + 1 %></td>
+              <td><%= row_field row, :phase, label: "Phase, row #{row.position + 1}",
+                        step: 0.01, min: 0, max: 0.99 %></td>
+              <td><%= row_field row, :color_offset, label: "Colour offset, row #{row.position + 1}", step: 1 %></td>
+              <td class="scale">
+                <%= row_field row, :width_numerator, label: "Scale numerator, row #{row.position + 1}", min: 1 %>
+                <span aria-hidden="true">/</span>
+                <%= row_field row, :width_denominator, label: "Scale denominator, row #{row.position + 1}", min: 1 %>
+              </td>
+              <td><%= row_mirror_field row %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <% if @pattern.rowed? %>
+        <%= form.submit "Save rows", class: "button" %>
+      <% end %>
+    <% end %>
+
+    <div class="run">
+      <%= form_with url: pattern_row_block_path(@pattern), method: :post, class: "form form--inline" do |divide| %>
+        <div class="field field--inline">
+          <label class="visually-hidden" for="row_count">How many rows</label>
+          <%= divide.number_field :count, id: "row_count", value: [ @pattern.rows.size, 4 ].max,
+                min: 1, max: Patterns::RowsController::MOST %>
+        </div>
+        <%= divide.submit @pattern.rowed? ? "Divide again" : "Break into rows", class: "button" %>
+      <% end %>
+
+      <% if @pattern.rowed? %>
+        <%= button_to "Remove rows", pattern_row_block_path(@pattern), method: :delete,
+              class: "button button--quiet" %>
+      <% end %>
+    </div>
+  </section>
+
   <section class="tiling">
     <table class="table tiling__modes">
       <caption>

@@ -14,12 +14,16 @@ class Pattern < ApplicationRecord
   # stripes, and only then the values. Reordering these lines makes destroying
   # a pattern raise, which is what the destroy tests are watching.
   has_many :colorways, dependent: :destroy, inverse_of: :pattern
+  has_many :rows, -> { order(:position) }, dependent: :destroy, inverse_of: :pattern
   has_one :sequence, dependent: :destroy, inverse_of: :pattern
   has_many :values, -> { order(:position) }, dependent: :destroy, inverse_of: :pattern
 
   validates :name, presence: true
   validates :slot_count, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
   validates :angle, presence: true
+  validates :row_depth, numericality: { greater_than: 0 }
+
+  validate :row_heights_sum_to_one
 
   before_validation :fold_angle
   after_create :compose
@@ -61,7 +65,32 @@ class Pattern < ApplicationRecord
     self
   end
 
+  def rowed?
+    rows.any?
+  end
+
+  # Break the pattern into bands of equal height. What is done inside each of
+  # them is the row's own business afterwards.
+  def divide_into_rows!(count)
+    heights = Proportions.even(count)
+
+    transaction do
+      rows.destroy_all
+      count.times { |index| rows.create!(position: index, height: heights[index]) }
+    end
+
+    tap { rows.reload }
+  end
+
   private
+    # A pattern with no rows is not asked to sum to anything — rows are
+    # optional, and their absence is not a block of height zero.
+    def row_heights_sum_to_one
+      return if rows.empty? || rows.any? { |row| row.height.nil? }
+
+      errors.add(:rows, "must sum to one") unless Proportions.sum_to_one?(rows.map(&:height))
+    end
+
     def fold_angle
       self.angle = angle.to_d.modulo(HALF_TURN) if angle
     end

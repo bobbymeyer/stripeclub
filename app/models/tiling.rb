@@ -5,6 +5,8 @@
 # form draws it seamlessly. What this does is say so, so that Snap To Tiling
 # has something to offer and an export has something to warn about.
 class Tiling
+  include ActionView::Helpers::TextHelper
+
   MODES = %i[ svg_pattern row_broken unbroken ].freeze
 
   # Small coprime integers, and this is what "small" means. Past a quarter the
@@ -28,8 +30,8 @@ class Tiling
   def status
     case mode
     when :svg_pattern then :seamless
-    when :row_broken then :seamless_with_rows
-    when :unbroken then fits? ? :seamless : :does_not_tile
+    when :row_broken then row_broken_status
+    when :unbroken then unbroken_status
     end
   end
 
@@ -90,8 +92,9 @@ class Tiling
     case status
     when :seamless then seamless_reason
     when :seamless_with_rows
-      "Rows carry the vertical seam, so any angle closes. " \
-        "The tile is the repeat over sin #{in_degrees(angle)}."
+      "#{pluralize(pattern.rows.size, "row")} carry the vertical seam, so any angle closes. " \
+        "The tile is the repeat over sin #{in_degrees(angle)}, " \
+        "times #{Row.tile_multiple(pattern.rows)} for the widest row."
     when :does_not_tile
       "#{in_degrees(angle)} does not close on a tile this shape. " \
         "The nearest that does is #{in_degrees(fitted_angle)}, a slope of " \
@@ -108,6 +111,17 @@ class Tiling
   end
 
   private
+    # Rows are the vertical seam, so a pattern that has none has nothing to
+    # break the tile on — and a row-broken tile of a pattern without rows is
+    # just an unbroken tile, held to the same constraint.
+    def row_broken_status
+      pattern.rowed? ? :seamless_with_rows : unbroken_status
+    end
+
+    def unbroken_status
+      fits? ? :seamless : :does_not_tile
+    end
+
     def radians
       angle * Math::PI / 180
     end

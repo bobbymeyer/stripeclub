@@ -53,10 +53,12 @@ class Colorway < ApplicationRecord
     pattern.sequence.stripes.map { |stripe| color_for(stripe) }
   end
 
-  def color_for(stripe)
+  # `offset` is the row's colour offset, passed straight through: how far
+  # along the palette this band's colours move.
+  def color_for(stripe, offset: 0)
     return nil if invalidated?
 
-    rule_for(stripe.value).color_for(stripe)
+    rule_for(stripe.value).color_for(stripe, offset: offset)
   end
 
   # The rule this value carries, or the default it carries by carrying none.

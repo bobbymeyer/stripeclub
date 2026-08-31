@@ -32,6 +32,35 @@ COMPOSITIONS.each do |composition|
   end
 end
 
+# Rows, from the handoff's reference images.
+#
+# Lightning is the one that says what rows are for: 45° stripes have no
+# vertical period an axis-aligned tile can use, and a half-period shift at
+# every band boundary supplies one. Chevron and Coarse and Fine are the two
+# transforms the references do not show.
+ROWED = [
+  { name: "Lightning", slot_count: 2, angle: 45, row_depth: 4, widths: [ 0.5, 0.5 ], rows: 4,
+    transform: ->(row, index) { { phase: (index * 0.5) % 1 } } },
+  { name: "Chevron", slot_count: 2, angle: 60, row_depth: 4, widths: [ 0.6, 0.4 ], rows: 6,
+    transform: ->(_row, index) { { mirrored: index.odd? } } },
+  { name: "Coarse and Fine", slot_count: 2, angle: 90, row_depth: 3, widths: [ 0.5, 0.5 ], rows: 3,
+    transform: ->(_row, index) { { width_numerator: 1, width_denominator: index + 1 } } },
+  { name: "Four Rows", slot_count: 4, angle: 90, row_depth: 4, widths: [ 0.25 ] * 4, rows: 4,
+    transform: ->(_row, index) { { color_offset: index } } }
+].freeze
+
+ROWED.each do |composition|
+  widths, count, transform = composition.values_at(:widths, :rows, :transform)
+  attributes = composition.except(:widths, :rows, :transform)
+
+  next if Pattern.exists?(name: attributes[:name])
+
+  pattern = Pattern.create!(attributes)
+  pattern.sequence.stripes.each_with_index { |stripe, index| stripe.update_column(:width, widths[index]) }
+  pattern.divide_into_rows!(count)
+  pattern.rows.each_with_index { |row, index| row.update!(transform.call(row, index)) }
+end
+
 # One colorway, from a palette written out here rather than fetched.
 #
 # Choosing a palette is Pandatone's part and needs PANDATONE_URL set;

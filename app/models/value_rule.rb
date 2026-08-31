@@ -36,12 +36,18 @@ class ValueRule < ApplicationRecord
     auto_value_match?
   end
 
-  def color_for(stripe)
+  # `offset` is a row's colour offset, and it moves the answer along by that
+  # many colours whichever rule produced it.
+  #
+  # For a random draw it moves within the subset rather than within the
+  # palette. A subset is a promise about which colours can appear, and an
+  # offset that walked out of it would break the promise a row at a time.
+  def color_for(stripe, offset: 0)
     case kind
-    when "auto_value_match" then palette.ranked[rank]
-    when "assigned_slot" then at(slot)
-    when "random" then at(subset[draws[stripe.position % draws.size]])
-    when "increment" then at(start + (stripe.position * step))
+    when "auto_value_match" then palette.ranked[(rank + offset) % size]
+    when "assigned_slot" then at(slot + offset)
+    when "random" then at(subset[(draws[stripe.position % draws.size] + offset) % subset.size])
+    when "increment" then at(start + (stripe.position * step) + offset)
     end
   end
 

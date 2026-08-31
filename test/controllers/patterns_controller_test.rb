@@ -205,6 +205,92 @@ class PatternsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, pattern.reload.slot_count
   end
 
+  # --- Rows ------------------------------------------------------------
+  test "a pattern can be broken into rows and put back together" do
+    pattern = Pattern.create!(name: "Banded", slot_count: 2)
+
+    post pattern_row_block_path(pattern), params: { count: 4 }
+
+    assert_redirected_to pattern_path(pattern)
+    assert_equal 4, pattern.rows.reload.size
+    assert_equal 1, Proportions.total(pattern.rows.map(&:height))
+
+    delete pattern_row_block_path(pattern)
+
+    assert_empty pattern.rows.reload
+  end
+
+  test "dividing again replaces the rows rather than adding to them" do
+    pattern = Pattern.create!(name: "Redivided", slot_count: 2).divide_into_rows!(6)
+
+    post pattern_row_block_path(pattern), params: { count: 3 }
+
+    assert_equal 3, pattern.rows.reload.size
+    assert_equal [ 0, 1, 2 ], pattern.rows.map(&:position)
+  end
+
+  test "a silly number of rows is brought back to something usable" do
+    pattern = Pattern.create!(name: "Greedy", slot_count: 2)
+
+    post pattern_row_block_path(pattern), params: { count: 500 }
+
+    assert_equal Patterns::RowsController::MOST, pattern.rows.reload.size
+  end
+
+  # The four transforms are read across the rows — a phase shift is only a
+  # shift relative to the band above it — so they are saved together.
+  test "the row transforms are saved together" do
+    pattern = Pattern.create!(name: "Transformed", slot_count: 2).divide_into_rows!(2)
+    first, second = pattern.rows.to_a
+
+    patch pattern_row_block_path(pattern), params: { rows: {
+      first.id => { phase: 0, color_offset: 0, mirrored: 0, width_numerator: 1, width_denominator: 1 },
+      second.id => { phase: 0.5, color_offset: 2, mirrored: 1, width_numerator: 1, width_denominator: 3 }
+    } }
+
+    assert_redirected_to pattern_path(pattern)
+    assert_equal 0.5, second.reload.phase.to_f
+    assert_equal 2, second.color_offset
+    assert_predicate second, :mirrored?
+    assert_equal Rational(1, 3), second.width_scale
+    assert_equal 0, first.reload.phase.to_f
+  end
+
+  test "a phase past a whole period is refused and nothing is saved" do
+    pattern = Pattern.create!(name: "Overshifted", slot_count: 2).divide_into_rows!(2)
+    first, second = pattern.rows.to_a
+
+    patch pattern_row_block_path(pattern), params: { rows: {
+      first.id => { phase: 0.25 },
+      second.id => { phase: 4 }
+    } }
+
+    assert_equal 0, first.reload.phase.to_f, "the transaction should have taken the first back"
+    assert_equal 0, second.reload.phase.to_f
+  end
+
+  test "a rowed pattern renders a band per row, each with its own pattern" do
+    pattern = Pattern.create!(name: "Rendered", slot_count: 2, angle: 45).divide_into_rows!(3)
+
+    get pattern_path(pattern)
+
+    assert_select "section.rows tbody tr", 3
+    assert_select "svg defs pattern", 4
+    assert_select "table.tiling__modes tbody tr", text: /Tiles, with rows/
+  end
+
+  # A form is not allowed to be a child of a tbody: the browser lifts it out
+  # and the table comes apart. One form around the whole table instead.
+  test "the row form is not inside the table it lays out" do
+    pattern = Pattern.create!(name: "Formed", slot_count: 2).divide_into_rows!(2)
+
+    get pattern_path(pattern)
+
+    assert_select "tbody form", 0
+    assert_select "tr form", 0
+    assert_select "form table.table tbody tr", 2
+  end
+
   private
     # A colorway built from a palette written out here rather than fetched.
     # Choosing a palette needs Pandatone; everything after the choosing does

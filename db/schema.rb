@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_31_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_31_150000) do
   create_table "colorways", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -34,8 +34,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_140000) do
     t.decimal "angle", precision: 7, scale: 3, default: "90.0", null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.decimal "row_depth", precision: 9, scale: 6, default: "1.0", null: false
     t.integer "slot_count", default: 1, null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "rows", force: :cascade do |t|
+    t.integer "color_offset", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.decimal "height", precision: 9, scale: 6, null: false
+    t.boolean "mirrored", default: false, null: false
+    t.integer "pattern_id", null: false
+    t.decimal "phase", precision: 9, scale: 6, default: "0.0", null: false
+    t.integer "position", null: false
+    t.datetime "updated_at", null: false
+    t.integer "width_denominator", default: 1, null: false
+    t.integer "width_numerator", default: 1, null: false
+    t.index ["pattern_id", "position"], name: "index_rows_on_pattern_id_and_position", unique: true
+    t.index ["pattern_id"], name: "index_rows_on_pattern_id"
   end
 
   create_table "sequences", force: :cascade do |t|
@@ -80,6 +96,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_140000) do
 
   add_foreign_key "colorways", "patterns"
   add_foreign_key "palette_snapshots", "colorways"
+  add_foreign_key "rows", "patterns"
   add_foreign_key "sequences", "patterns"
   add_foreign_key "stripes", "sequences"
   add_foreign_key "stripes", "values"

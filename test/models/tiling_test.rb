@@ -74,11 +74,18 @@ class TilingTest < ActiveSupport::TestCase
   # Rows carry the vertical seam, so the angle is free again and only the
   # horizontal period has to be worked out: P over sin θ.
   test "a row-broken tile takes any angle and says what its period is" do
-    tiling = tiling_for(30, mode: :row_broken)
+    tiling = tiling_for(30, mode: :row_broken) { |pattern| pattern.divide_into_rows!(3) }
 
     assert_predicate tiling, :seamless?
     assert_equal :seamless_with_rows, tiling.status
     assert_in_delta 120.0, tiling.horizontal_period(60), 0.001
+  end
+
+  # There is no break without rows, so the mode has nothing to offer and the
+  # unbroken constraint is the one that applies.
+  test "a row-broken tile of a pattern with no rows is an unbroken tile" do
+    assert_equal :does_not_tile, tiling_for(30, mode: :row_broken).status
+    assert_equal :seamless, tiling_for(45, mode: :row_broken).status
   end
 
   test "a row-broken tile at the horizontal has no horizontal period to find" do
@@ -95,8 +102,9 @@ class TilingTest < ActiveSupport::TestCase
     end
 
     def tiling_for(angle, mode: :unbroken, width: 1.0, height: 1.0)
-      pattern = Pattern.create!(name: "Angled #{angle}#{mode}#{width}", slot_count: 2, angle: angle)
+      pattern = Pattern.create!(name: "Angled #{angle}#{mode}#{width}#{rand(1 << 20)}", slot_count: 2, angle: angle)
+      yield pattern if block_given?
 
-      Tiling.new(pattern, mode: mode, width: width, height: height)
+      Tiling.new(pattern.reload, mode: mode, width: width, height: height)
     end
 end

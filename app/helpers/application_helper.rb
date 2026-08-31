@@ -72,6 +72,37 @@ module ApplicationHelper
     pattern.sequence.stripes.any? { |stripe| stripe.value_id == value.id }
   end
 
+  # A row's transform as one control in one table cell.
+  #
+  # its-swiss's form builder writes a label above a control down the width of
+  # a form, which is the right shape for a form and the wrong one for a table
+  # of four small numbers. The .field wrapper is kept, so the control is
+  # styled the way every other control in the application is; the label moves
+  # off screen, because the column heading already says what it is and a
+  # second copy in every cell would be read out on every one.
+  def row_field(row, attribute, label:, **options)
+    id = "rows_#{row.id}_#{attribute}"
+
+    tag.div(class: "field") do
+      safe_join([
+        tag.label(label, class: "visually-hidden", for: id),
+        number_field_tag("rows[#{row.id}][#{attribute}]", row.public_send(attribute), id: id, **options)
+      ])
+    end
+  end
+
+  def row_mirror_field(row)
+    id = "rows_#{row.id}_mirrored"
+
+    tag.div(class: "field field--inline") do
+      safe_join([
+        hidden_field_tag("rows[#{row.id}][mirrored]", 0, id: nil),
+        check_box_tag("rows[#{row.id}][mirrored]", 1, row.mirrored?, id: id),
+        tag.label("Mirror row #{row.position + 1}", class: "visually-hidden", for: id)
+      ])
+    end
+  end
+
   def rule_name(rule)
     {
       "auto_value_match" => "By rank", "assigned_slot" => "Palette slot #{rule.slot}",

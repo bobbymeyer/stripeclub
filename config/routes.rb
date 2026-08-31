@@ -24,6 +24,13 @@ Rails.application.routes.draw do
     # angle: what is asked for is "make this close", and which angle does that
     # is the answer, not the request.
     resource :tiling, only: :update, module: :patterns
+
+    # The row block is one thing: dividing replaces whatever was there,
+    # removing takes all of it, and the transforms are saved together because
+    # they are read together. A form per row would also have to sit inside the
+    # table that lays them out, and a form is not allowed to be a child of a
+    # tbody — the browser lifts it out and the table comes apart.
+    resource :rows, only: %i[ create update destroy ], module: :patterns, as: :row_block
   end
 
   root "patterns#index"

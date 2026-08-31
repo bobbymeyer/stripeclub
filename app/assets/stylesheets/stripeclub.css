@@ -140,3 +140,28 @@
   font-size: var(--size-2);
   margin-block-end: var(--space-2);
 }
+
+/* --- Rows --------------------------------------------------------------
+   A row's four transforms are four small numbers on one line, so the fields
+   are sized to the numbers rather than to the column. its-swiss's .form is
+   built for a stack of labelled fields; inside a table cell it is one control
+   and nothing else, which is what .form--inline is for. */
+.row-form .field { margin: 0; }
+
+.rows input[type="number"] {
+  width: 4.5rem;
+}
+
+.rows td { vertical-align: middle; }
+
+/* The scale is one ratio, not two numbers that happen to be near each other.
+   its-swiss's .field is a full-width column — right for a form, and it stacks
+   a numerator over a solidus over a denominator when two of them share a
+   cell. The cell does the arranging instead. */
+.rows .scale {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.rows .scale .field { width: auto; }

@@ -33,11 +33,13 @@ class ValueScale
   end
 
   # Takes a stripe, like a colorway does, so the renderer never learns which
-  # of the two it was handed. There is nothing along the repeat that changes
-  # the answer here — a value scale has no rule that counts stripes — so it
-  # reads straight through to the value.
-  def color_for(stripe)
-    gray_for(stripe.value)
+  # of the two it was handed.
+  #
+  # `offset` is a row's colour offset. Here it moves the slot along the
+  # ladder rather than along a palette, which is the same motion — the ladder
+  # is what this dressing has instead of one.
+  def color_for(stripe, offset: 0)
+    gray_at((stripe.value.position + offset) % pattern.slot_count)
   end
 
   def colors
@@ -49,16 +51,19 @@ class ValueScale
     pattern.values.map { |value| gray_for(value) }
   end
 
-  # The step of the ladder this value sits on, whether or not a stripe draws
-  # it. The editor asks for this one slot at a time.
+  # The step of the ladder this value sits on. The editor asks for this one
+  # slot at a time.
   def gray_for(value)
+    gray_at(value.position)
+  end
+
+  private
+    def gray_at(position)
       Pandatone::Color.new(
-        id: value.position, name: "Value #{value.position}",
-        hex: Luminance.gray(lightness_for(value.position))
+        id: position, name: "Value #{position}", hex: Luminance.gray(lightness_for(position))
       )
     end
 
-  private
     def lightness_for(position)
       return PAPER if pattern.slot_count <= 1
 
