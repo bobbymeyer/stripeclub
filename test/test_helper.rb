@@ -2,6 +2,11 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
+# Nothing in the suite is allowed out to the network. Localhost stays open
+# because the system tests drive a browser against a server on it.
+require "webmock/minitest"
+WebMock.disable_net_connect!(allow_localhost: true)
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers

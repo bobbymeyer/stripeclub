@@ -64,4 +64,10 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+
+  # Pandatone is reached over HTTP, and the parts of that worth testing are
+  # the request as it goes out — the path, the token header, the accept — not
+  # a stub standing in for it. Faking below Net::HTTP would leave exactly
+  # those untested.
+  gem "webmock"
 end
