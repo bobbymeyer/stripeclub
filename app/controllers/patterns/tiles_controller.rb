@@ -39,14 +39,11 @@ class Patterns::TilesController < ApplicationController
     end
 
     def tile_svg(dressing)
-      tile = Tile.new(dressing, period: period)
-
-      SvgPattern.new(dressing, period: period, width: tile.width, height: tile.height,
-        title: pattern.name, desc: tile.tiling.reason).to_s
+      Tile.new(dressing, period: period).to_svg
     end
 
     def png(dressing)
-      TilePng.new(dressing, period: period, scale: scale)
+      Tile.new(dressing, period: period).to_png(scale: scale)
     end
 
     def period

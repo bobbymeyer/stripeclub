@@ -65,6 +65,12 @@ class Pattern < ApplicationRecord
     self
   end
 
+  # An id or a name. A tool asking for "Awning" should not have to look up a
+  # number first, and the name is what a person put on it.
+  def self.friendly(key)
+    find_by(name: key) || find(key)
+  end
+
   def rowed?
     rows.any?
   end

@@ -38,5 +38,26 @@ Rails.application.routes.draw do
     resource :tile, only: :show, module: :patterns
   end
 
+  # The API is versioned from the first commit: other tools depend on this
+  # contract, and the way to change it is to add v2, not to edit v1.
+  #
+  # JSON by default, so a request that names no format gets the one this API
+  # published itself as. An explicit .svg or .png still wins, which is how a
+  # pattern can be fetched as a picture on the same route.
+  #
+  # Read-only. Patterns are composed in the editor; this is for the tools that
+  # consume them — the way Stripeclub consumes Pandatone.
+  namespace :api, defaults: { format: :json } do
+    namespace :v1 do
+      resources :patterns, only: %i[ index show ] do
+        get :tile, on: :member
+      end
+
+      resources :colorways, only: %i[ index show ] do
+        get :tile, on: :member
+      end
+    end
+  end
+
   root "patterns#index"
 end

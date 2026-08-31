@@ -22,6 +22,12 @@ class ValueRule < ApplicationRecord
 
   validates :kind, inclusion: { in: KINDS }
 
+  # A rule that has said nothing still has an empty settings hash rather than
+  # no hash. The default rule is built and never saved, so nothing else would
+  # ever give it one — and a consumer reading `"settings": null` would have to
+  # know that means the same as `{}`.
+  attribute :settings, default: -> { {} }
+
   store_accessor :settings, :slot, :subset, :seed, :start, :step
 
   before_validation :seed_itself, if: :random?

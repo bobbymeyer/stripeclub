@@ -52,6 +52,17 @@ class Tile
     tiling.seamless?
   end
 
+  # The tile as a file. Both callers — the page's download links and the API —
+  # want the same bytes, so neither of them builds it.
+  def to_svg(title: nil)
+    SvgPattern.new(dressing, period: period, width: width, height: height,
+      title: title || pattern.name, desc: tiling.reason).to_s
+  end
+
+  def to_png(scale: 1)
+    TilePng.new(dressing, period: period, scale: scale)
+  end
+
   # The colour at a point, in tile coordinates.
   #
   # Without rows the pattern is one tiling anchored at the origin, so the

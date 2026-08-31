@@ -31,12 +31,15 @@ Two consequences the code is built around:
 | `PaletteSnapshot` | The colours as they were when the palette was chosen |
 | `Luminance` | OKLab's L, computed here because Pandatone's brightness is not perceptual |
 | `Pandatone::Client` | The v1 API, fetched once a session and filtered locally |
+| `Row` | A band, and what is done to the repeat inside it |
 | `SvgPattern` | A colorway as an SVG `<pattern>`. The reference form |
 | `ValueScale` | A pattern with no palette, drawn in value, paper to ink |
+| `Tile` | One closing tile: how big it has to be, and what colour is at any point |
+| `TilePng` | That function, sampled — four times a pixel, so an angled edge is an edge |
+| `Tiling` / `SnapToTiling` | Whether the repeat closes, per output mode, and the nearest angle that does |
 
-Build order and what is left: `Step N` in the task list. Steps 1–4 are done —
-structure, Pandatone, colorways with Auto-Value-Match, and the axis-aligned
-SVG render. Angle and Snap To Tiling are next.
+Steps 1–9 of the build order are done. Round two — the imperfect stripes, with
+`feTurbulence` edges and seeded width jitter — is what is left.
 
 ## Styling
 
@@ -53,6 +56,46 @@ Everything the gem ships is inside a cascade layer and everything in
 out-specifying anything. What Stripeclub found is in
 [ITS-SWISS-CANDIDATES.md](ITS-SWISS-CANDIDATES.md) — two real bugs, two
 boundary questions, and a note on what held.
+
+## API
+
+Everything is under `/api/v1`, read-only. Collections are bare arrays, no
+envelope. `404` with `{"error": "Not found"}`, `401` with
+`{"error": "Unauthorized"}`, `422` with a reason when a colorway cannot dress
+its pattern.
+
+```sh
+curl https://stripeclub.example.com/api/v1/patterns/Awning/tile.svg
+```
+
+Stripeclub has no accounts, so the credential is one token rather than a user.
+Set `STRIPECLUB_API_TOKEN` and it is required; leave it unset and the API is
+open, which is what a tool on your own machine wants. **In production an unset
+token closes the API rather than opening it** — a design tool on the internet
+with its API open is not a decision anyone makes on purpose. `Token` works as
+well as `Bearer`. The session cookie is not accepted, because there isn't one.
+
+| Verb | Path | Notes |
+| ---- | ---- | ----- |
+| GET | `/patterns` | Every pattern, by name |
+| GET | `/patterns/:id` | Structure: sequence, rows, colorways. `:id` may be an id or a name |
+| GET | `/patterns/:id.svg` | The reference form — a `<pattern>` element, seamless at any angle |
+| GET | `/patterns/:id/tile` | The tile's measurements and whether it closes |
+| GET | `/patterns/:id/tile.svg` | One tile, for whatever is going to repeat it |
+| GET | `/patterns/:id/tile.png` | The same tile, rasterised |
+| GET | `/colorways` | Every colorway |
+| GET | `/colorways/:id` | Rules, and the colours they resolve to |
+| GET | `/colorways/:id.svg` | The reference form, dressed |
+| GET | `/colorways/:id/tile.svg` | One tile, dressed |
+| GET | `/colorways/:id/tile.png` | The same, rasterised |
+
+`?period=` is how many user units a repeat is; `?scale=` is how many pixels a
+unit is worth. They are the only two things a consumer needs that the pattern
+does not already say.
+
+The wire format is pinned longhand in `test/controllers/api/v1/contract_test.rb`.
+Treat a failure there as a version bump rather than a fix — the way to change
+v1 is to add v2.
 
 ## Running it
 
