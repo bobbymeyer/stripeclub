@@ -302,6 +302,55 @@ class PatternsControllerTest < ActionDispatch::IntegrationTest
       pattern_tile_path(colorway.pattern, format: :svg, colorway: colorway.id)
   end
 
+  # --- Round two -------------------------------------------------------
+  test "a pattern can be roughened and made clean again" do
+    pattern = Pattern.create!(name: "Rough", slot_count: 3)
+    clean = pattern.sequence.stripes.map(&:width)
+
+    patch pattern_imperfection_path(pattern), params: {
+      imperfection: { wobble: 0.08, variance: 0.3, texture: 0.2, seed: 11 }
+    }
+
+    assert_redirected_to pattern_path(pattern)
+    assert_predicate pattern.reload.imperfection, :any?
+    assert_not_equal clean, pattern.drawn_widths
+
+    delete pattern_imperfection_path(pattern)
+
+    assert_nil pattern.reload.imperfection
+    assert_equal clean, pattern.drawn_widths
+  end
+
+  # The point of round two: the composition survives being roughened.
+  test "roughening never touches the stored composition" do
+    pattern = Pattern.create!(name: "Untouched", slot_count: 3)
+    stored = pattern.sequence.stripes.map(&:width)
+
+    patch pattern_imperfection_path(pattern), params: { imperfection: { variance: 0.5, seed: 3 } }
+
+    assert_equal stored, pattern.reload.sequence.stripes.map(&:width)
+  end
+
+  test "a variance that could take a stripe to nothing is refused and says so" do
+    pattern = Pattern.create!(name: "Greedy", slot_count: 3)
+
+    patch pattern_imperfection_path(pattern), params: { imperfection: { variance: 2 } }
+
+    assert_redirected_to pattern_path(pattern)
+    assert_nil pattern.reload.imperfection
+  end
+
+  test "a roughened pattern draws its filters and says what a raster will miss" do
+    pattern = Pattern.create!(name: "Filtered", slot_count: 2)
+    Imperfection.create!(pattern: pattern, wobble: 0.1, texture: 0.2, seed: 5)
+
+    get pattern_path(pattern.reload)
+
+    assert_select "svg filter feTurbulence[stitchTiles=stitch]", 2
+    assert_select "svg filter feDisplacementMap"
+    assert_match(/carries the geometry and not the filters/, Tile.new(ValueScale.new(pattern)).note)
+  end
+
   private
     # A colorway built from a palette written out here rather than fetched.
     # Choosing a palette needs Pandatone; everything after the choosing does

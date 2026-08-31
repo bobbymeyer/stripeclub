@@ -52,11 +52,28 @@ class Tile
     tiling.seamless?
   end
 
+  # What is true about this tile, for the file and for the API.
+  #
+  # A raster carries the geometry and not the filters, and that is worth
+  # saying rather than letting someone find out by comparing two downloads: a
+  # displacement map and a noise multiply are things a renderer does to a
+  # picture, and a PNG arrives with no renderer attached.
+  def note
+    return tiling.reason unless filtered?
+
+    "#{tiling.reason} The PNG carries the geometry and not the filters — " \
+      "wobble and texture are drawn by whatever renders the SVG."
+  end
+
+  def filtered?
+    pattern.imperfection&.then { |rough| rough.wobbly? || rough.textured? } || false
+  end
+
   # The tile as a file. Both callers — the page's download links and the API —
   # want the same bytes, so neither of them builds it.
   def to_svg(title: nil)
     SvgPattern.new(dressing, period: period, width: width, height: height,
-      title: title || pattern.name, desc: tiling.reason).to_s
+      title: title || pattern.name, desc: note).to_s
   end
 
   def to_png(scale: 1)
@@ -191,7 +208,7 @@ class Tile
     # BigDecimal because the sum rule is about exact places; comparing a float
     # phase against one converts on every comparison, a million times over.
     def float_edges
-      @float_edges ||= Proportions.edges(stripes.map(&:width)).map(&:to_f)
+      @float_edges ||= Proportions.edges(pattern.drawn_widths).map(&:to_f)
     end
 
     def row_edges

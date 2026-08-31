@@ -91,4 +91,39 @@ if (pattern = Pattern.find_by(name: DRESSED)) && pattern.colorways.none?
   puts "Dressed #{DRESSED} in #{palette.name}."
 end
 
+# Round two, from the handoff's remaining reference image: vertical, five
+# colours on a cream ground, wobbly edges, linen texture.
+#
+# The imperfection is a post-effect over all of it. The widths below are what
+# is stored; what is drawn is those widths jittered from the seed, with the
+# edges displaced and a noise multiplied over the whole. Take the imperfection
+# away and this composition is still exactly here.
+if (pattern = Pattern.find_or_create_by!(name: "Rêve & Bloom") { |new_pattern|
+      new_pattern.assign_attributes(slot_count: 5, angle: 90)
+    }) && pattern.imperfection.nil?
+  [ 0.34, 0.18, 0.22, 0.14, 0.12 ].each_with_index do |width, index|
+    pattern.sequence.stripes[index].update_column(:width, width)
+  end
+
+  palette = Pandatone::Palette.new(id: 9, name: "Rêve & Bloom", colors: [
+    [ "Cream", "#F4EFE4" ], [ "Rose", "#D98BA0" ], [ "Sage", "#8FA68E" ],
+    [ "Terracotta", "#C4714F" ], [ "Plum", "#6B4C63" ]
+  ].each_with_index.map do |(name, hex), index|
+    Pandatone::Color.new(
+      id: index, name: name, hex: hex,
+      red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16)
+    )
+  end)
+
+  Colorway.create!(pattern: pattern, palette: palette) if pattern.colorways.none?
+
+  Imperfection.create!(
+    pattern: pattern, seed: 7,
+    wobble: 0.06, wobble_frequency: 0.04, wobble_octaves: 3,
+    texture: 0.22, texture_frequency: 0.9, variance: 0.2
+  )
+
+  puts "Roughened Rêve & Bloom."
+end
+
 puts "Composed #{Pattern.count} patterns."

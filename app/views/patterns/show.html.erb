@@ -187,6 +187,43 @@
     <% end %>
   </section>
 
+  <section class="imperfection">
+    <% rough = @pattern.imperfection || Imperfection.new(pattern: @pattern) %>
+
+    <%= its_swiss_form_with model: rough, url: pattern_imperfection_path(@pattern), method: :patch,
+          class: "form" do |form| %>
+      <p class="hint">
+        Round two: clean geometry plus post-effects. Nothing here touches the composition —
+        the widths stay what you typed, and turning it off gives the clean pattern back.
+      </p>
+
+      <div class="rough-grid">
+        <%= form.number_field :wobble, step: 0.01, min: 0, max: 1,
+              hint: "How far an edge is pushed, as a proportion of the repeat." %>
+        <%= form.number_field :wobble_frequency, step: 0.005, min: 0.001, max: 4,
+              hint: "How close together the wobbles are." %>
+        <%= form.number_field :wobble_octaves, step: 1, min: 1, max: 5,
+              hint: "How many scales of wobble are layered." %>
+        <%= form.number_field :variance, step: 0.05, min: 0, max: Imperfection::MOST_VARIANCE,
+              hint: "How much a width may be off, as a proportion of itself. Still sums to one." %>
+        <%= form.number_field :texture, step: 0.02, min: 0, max: 1,
+              hint: "How strongly a tiling noise is multiplied over the whole." %>
+        <%= form.number_field :texture_frequency, step: 0.05, min: 0.001, max: 4,
+              hint: "How fine the texture is." %>
+        <%= form.number_field :seed, step: 1,
+              hint: "The same seed draws the same imperfection, every time." %>
+      </div>
+
+      <div class="run">
+        <%= form.submit rough.persisted? ? "Set" : "Roughen" %>
+        <% if rough.persisted? %>
+          <%= button_to "Make it clean", pattern_imperfection_path(@pattern), method: :delete,
+                class: "button button--quiet" %>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
   <section class="export">
     <% tile = Tile.new(ValueScale.new(@pattern), period: SvgPattern::PERIOD) %>
     <p class="hint">

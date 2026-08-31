@@ -36,6 +36,11 @@ Rails.application.routes.draw do
     # `?colorway=` to have it dressed, `?scale=` to say how many pixels a unit
     # of the tile is worth.
     resource :tile, only: :show, module: :patterns
+
+    # Round two. Made and unmade whole: a pattern either has an imperfection
+    # or is clean, and the three effects are set together because they are
+    # looked at together.
+    resource :imperfection, only: %i[ update destroy ], module: :patterns
   end
 
   # The API is versioned from the first commit: other tools depend on this

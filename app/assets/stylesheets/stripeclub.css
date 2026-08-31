@@ -165,3 +165,14 @@
 }
 
 .rows .scale .field { width: auto; }
+
+/* --- Round two ---------------------------------------------------------
+   Seven numbers that are read together, so they are laid out together rather
+   than as seven full-width fields down a column. its-swiss's .field is the
+   column; the grid around them is this application's. */
+.rough-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+  padding-block-end: var(--space-3);
+}

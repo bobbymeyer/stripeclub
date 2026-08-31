@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_31_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_31_160000) do
   create_table "colorways", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -18,6 +18,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_150000) do
     t.integer "pattern_id", null: false
     t.datetime "updated_at", null: false
     t.index ["pattern_id"], name: "index_colorways_on_pattern_id"
+  end
+
+  create_table "imperfections", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "pattern_id", null: false
+    t.integer "seed", null: false
+    t.decimal "texture", precision: 9, scale: 6, default: "0.0", null: false
+    t.decimal "texture_frequency", precision: 9, scale: 6, default: "0.8", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "variance", precision: 9, scale: 6, default: "0.0", null: false
+    t.decimal "wobble", precision: 9, scale: 6, default: "0.0", null: false
+    t.decimal "wobble_frequency", precision: 9, scale: 6, default: "0.02", null: false
+    t.integer "wobble_octaves", default: 2, null: false
+    t.index ["pattern_id"], name: "index_imperfections_on_pattern_id", unique: true
   end
 
   create_table "palette_snapshots", force: :cascade do |t|
@@ -95,6 +109,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_31_150000) do
   end
 
   add_foreign_key "colorways", "patterns"
+  add_foreign_key "imperfections", "patterns"
   add_foreign_key "palette_snapshots", "colorways"
   add_foreign_key "rows", "patterns"
   add_foreign_key "sequences", "patterns"

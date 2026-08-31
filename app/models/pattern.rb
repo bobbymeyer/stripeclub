@@ -15,6 +15,7 @@ class Pattern < ApplicationRecord
   # a pattern raise, which is what the destroy tests are watching.
   has_many :colorways, dependent: :destroy, inverse_of: :pattern
   has_many :rows, -> { order(:position) }, dependent: :destroy, inverse_of: :pattern
+  has_one :imperfection, dependent: :destroy, inverse_of: :pattern
   has_one :sequence, dependent: :destroy, inverse_of: :pattern
   has_many :values, -> { order(:position) }, dependent: :destroy, inverse_of: :pattern
 
@@ -69,6 +70,15 @@ class Pattern < ApplicationRecord
   # number first, and the name is what a person put on it.
   def self.friendly(key)
     find_by(name: key) || find(key)
+  end
+
+  # The widths to draw with: what the sequence holds, or what the pattern's
+  # imperfection makes of them. Asked here rather than in each renderer, so
+  # the SVG and the raster cannot end up drawing different stripes.
+  def drawn_widths
+    clean = sequence.stripes.map(&:width)
+
+    imperfection&.widths(clean) || clean
   end
 
   def rowed?

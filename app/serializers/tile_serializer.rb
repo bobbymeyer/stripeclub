@@ -9,7 +9,7 @@ module TileSerializer
       width: tile.width.round(4),
       height: tile.height.round(4),
       tiles: tile.tiles?,
-      note: tile.tiling.reason
+      note: tile.note
     }
   end
 end

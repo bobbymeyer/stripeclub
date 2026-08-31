@@ -37,9 +37,20 @@ Two consequences the code is built around:
 | `Tile` | One closing tile: how big it has to be, and what colour is at any point |
 | `TilePng` | That function, sampled — four times a pixel, so an angled edge is an edge |
 | `Tiling` / `SnapToTiling` | Whether the repeat closes, per output mode, and the nearest angle that does |
+| `Imperfection` | Round two: wobbly edges, seeded width jitter, tiling texture — none of which touch the composition |
 
-Steps 1–9 of the build order are done. Round two — the imperfect stripes, with
-`feTurbulence` edges and seeded width jitter — is what is left.
+All ten steps of the build order are done.
+
+Round two is post-effects, not geometry: the widths in the sequence stay what
+you typed and the angle stays what you set, and the wobble, the jitter and the
+texture are applied when the pattern is drawn. Turn an imperfection off and
+the clean composition is still exactly there. The one that looks like an
+exception — width variance — computes its widths from a seed at draw time and
+renormalises them, so the sequence still sums to one.
+
+A raster carries the geometry and not the filters. A displacement map and a
+noise multiply are things a renderer does to a picture, and a PNG arrives with
+no renderer attached — so the tile says so, in its `<desc>` and in the API.
 
 ## Styling
 
@@ -106,6 +117,10 @@ bin/rails server
 ```
 
 `/its-swiss/specimen` in development renders every component the gem ships.
+
+Choosing a palette is Pandatone's part and wants `PANDATONE_URL` and
+`PANDATONE_TOKEN`. Everything after the choosing needs neither, and the seeds
+dress two patterns from palettes written out in the file.
 
 ## Tests
 

@@ -60,7 +60,7 @@ class SvgPattern
     raise NothingToDraw, "the pattern has slots this colorway's palette cannot fill" if @dressing.invalidated?
 
     tag.svg(
-      safe_join([ *described, tag.defs(definitions), surface ]),
+      safe_join([ *described, tag.defs(safe_join([ definitions, *filters, *frame ])), *surface ]),
       xmlns: NAMESPACE, width: number(@width), height: number(@height),
       viewBox: "0 0 #{number(@width)} #{number(@height)}"
     )
@@ -75,8 +75,106 @@ class SvgPattern
       rows.any? ? banded : plain
     end
 
+    # What the tile is painted onto, and — round two — what is done to the
+    # paint afterwards. Post-effects: the pattern is drawn clean and then
+    # roughened, which is what leaves the composition editable underneath.
     def surface
-      tag.rect(width: "100%", height: "100%", fill: "url(##{@id})")
+      [ paint, texture_layer ].compact
+    end
+
+    def paint
+      return tag.rect(width: "100%", height: "100%", fill: "url(##{@id})") unless wobbly?
+
+      # Painted well outside the frame, then clipped back to it.
+      #
+      # Outside, because a displacement pulls colour in from beside itself,
+      # and at the edge of a rect that is exactly the frame there is nothing
+      # beside it to pull — so every drawing would fray into the background
+      # rather than into more pattern.
+      #
+      # Clipped, because the rest of it is not this drawing's to paint. An svg
+      # root is meant to clip to its viewport and inline in a page it does
+      # not always, so the file says so itself rather than relying on whatever
+      # opens it.
+      tag.g(
+        tag.rect(x: "-50%", y: "-50%", width: "200%", height: "200%",
+          fill: "url(##{@id})", filter: "url(##{@id}-wobble)"),
+        "clip-path": "url(##{@id}-frame)"
+      )
+    end
+
+    def frame
+      return [] unless wobbly?
+
+      [ tag.clipPath(tag.rect(width: number(@width), height: number(@height)), id: "#{@id}-frame") ]
+    end
+
+    def texture_layer
+      return nil unless textured?
+
+      tag.rect(width: "100%", height: "100%", filter: "url(##{@id}-texture)",
+        opacity: number(imperfection.texture), style: "mix-blend-mode: multiply")
+    end
+
+    def filters
+      [ (wobble_filter if wobbly?), (texture_filter if textured?) ].compact
+    end
+
+    # Turbulence displacing the pattern by its own noise.
+    #
+    # sRGB rather than the linearRGB a filter uses by default. The noise's
+    # channels are read here as numbers — the middle of the range means "leave
+    # this pixel where it is" — and converting them to linear light first
+    # moves that middle, so the wobble leans one way. A filter that means its
+    # numbers rather than its colours says sRGB.
+    #
+    # stitchTiles is the whole reason this can be put on a repeat. Without it
+    # the noise is a field that happens to lie under the pattern and seams
+    # wherever the filter's own tile does; with it the noise is generated to
+    # meet itself.
+    #
+    # The displacement is a proportion of the repeat rather than a number of
+    # units, so the same pattern drawn twice as large wobbles twice as far. A
+    # fixed distance would be a different pattern at every size.
+    def wobble_filter
+      tag.filter(
+        safe_join([
+          tag.feTurbulence(type: "fractalNoise", baseFrequency: number(imperfection.wobble_frequency),
+            numOctaves: imperfection.wobble_octaves, seed: imperfection.seed,
+            stitchTiles: "stitch", result: "wobble-noise"),
+          tag.feDisplacementMap(in: "SourceGraphic", in2: "wobble-noise",
+            scale: number(imperfection.wobble * @period),
+            xChannelSelector: "R", yChannelSelector: "G")
+        ]),
+        id: "#{@id}-wobble", x: "-20%", y: "-20%", width: "140%", height: "140%",
+        "color-interpolation-filters": "sRGB"
+      )
+    end
+
+    # A noise, desaturated, multiplied over everything. Colour in it would be
+    # colour the colorway did not choose, and the linen it is standing in for
+    # has none.
+    def texture_filter
+      tag.filter(
+        safe_join([
+          tag.feTurbulence(type: "fractalNoise", baseFrequency: number(imperfection.texture_frequency),
+            numOctaves: 3, seed: imperfection.seed, stitchTiles: "stitch"),
+          tag.feColorMatrix(type: "saturate", values: "0")
+        ]),
+        id: "#{@id}-texture", "color-interpolation-filters": "sRGB"
+      )
+    end
+
+    def imperfection
+      @dressing.pattern.imperfection
+    end
+
+    def wobbly?
+      imperfection&.wobbly?
+    end
+
+    def textured?
+      imperfection&.textured?
     end
 
     # --- One tile, turned ------------------------------------------------
@@ -194,8 +292,10 @@ class SvgPattern
     end
 
     # --- Shared ----------------------------------------------------------
+    # The widths as drawn, which is not always the widths as stored: variance
+    # is geometry, so it moves the rects rather than filtering them.
     def edges
-      @edges ||= Proportions.edges(stripes.map(&:width))
+      @edges ||= Proportions.edges(@dressing.pattern.drawn_widths)
     end
 
     def fill_for(stripe, offset = 0)
