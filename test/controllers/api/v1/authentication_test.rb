@@ -1,81 +1,49 @@
 require "test_helper"
 
-class Api::V1::AuthenticationTest < ActionDispatch::IntegrationTest
-  setup { Pattern.create!(name: "Awning", slot_count: 2) }
+module Stripeclub
+  # The door is the host's. What the engine promises is that every endpoint
+  # stands behind it: each inherits from the host's API controller, so
+  # whatever that controller refuses, the engine refuses too. The dummy host
+  # under test/ opens to one token; a real one looks tokens up.
+  class Api::V1::AuthenticationTest < ActionDispatch::IntegrationTest
+    setup do
+      @pattern = Pattern.create!(name: "Awning", slot_count: 2)
+      @colorway = Colorway.create!(pattern: @pattern, palette: pandatone_palette("#C1272D", "#FAF8F4"))
+      sign_out_client
+    end
 
-  # Stripeclub has no accounts — it is one person's tool. Unset, the API is
-  # open, which is what a tool on someone's own machine wants and how the camo
-  # project reaches it.
-  test "with no token configured the api is open" do
-    with_token(nil) { get api_v1_patterns_url }
+    test "closes every endpoint" do
+      [ api_v1_patterns_url, api_v1_pattern_url(@pattern), tile_api_v1_pattern_url(@pattern),
+        api_v1_colorways_url, api_v1_colorway_url(@colorway), tile_api_v1_colorway_url(@colorway) ].each do |url|
+        get url
 
-    assert_response :success
-  end
+        assert_response :unauthorized, "#{url} answered without a token"
+        assert_equal({ "error" => "Unauthorized" }, json)
+      end
+    end
 
-  test "with a token configured the api wants it" do
-    with_token("sekrit") do
+    # A session cookie is not a token. Letting one in would mean any page on
+    # the internet could drive the API from a signed-in browser.
+    test "does not accept the browser session in place of a token" do
       get api_v1_patterns_url
 
       assert_response :unauthorized
+    end
 
-      get api_v1_patterns_url, headers: { "Authorization" => "Bearer sekrit" }
+    test "the host's token opens it" do
+      sign_in_client
+
+      get api_v1_patterns_url
 
       assert_response :success
     end
-  end
 
-  # Rails reads both spellings, so a client sending the older form is not
-  # turned away for a reason nobody could guess from a 401.
-  test "either spelling of the header is read" do
-    with_token("sekrit") do
-      get api_v1_patterns_url, headers: { "Authorization" => 'Token token="sekrit"' }
+    # A tool has to be able to read the door before it has a key.
+    test "the API's description of itself is not behind the token" do
+      get api_v1_openapi_url
 
       assert_response :success
+      assert_equal "3.1.0", json["openapi"]
     end
   end
-
-  test "a wrong token is refused" do
-    with_token("sekrit") do
-      get api_v1_patterns_url, headers: { "Authorization" => "Bearer nearly" }
-
-      assert_response :unauthorized
-    end
-  end
-
-  # A design tool put on the internet with its API open is not a decision
-  # anyone makes on purpose. Failing shut with a legible reason beats both
-  # guessing and a stack trace.
-  #
-  # Set from Rails.env in the initializer and read as a setting here. Moving
-  # the whole environment under a test to reach this branch reaches much
-  # further than the branch does — cable.yml resolves per environment, and
-  # production's names a gem this application does not bundle, so every
-  # integration test that ran after it in the same process died in setup.
-  test "with a token required and none configured the api is shut" do
-    with_required_token do
-      with_token(nil) do
-        get api_v1_patterns_url
-
-        assert_response :unauthorized
-        assert_equal "No API token is configured", JSON.parse(response.body)["error"]
-      end
-    end
-  end
-
-  private
-    def with_token(token)
-      was = Rails.application.config.x.api.token
-      Rails.application.config.x.api.token = token
-      yield
-    ensure
-      Rails.application.config.x.api.token = was
-    end
-
-    def with_required_token
-      was = Rails.application.config.x.api.required
-      Rails.application.config.x.api.required = true
-      yield
-    ensure
-      Rails.application.config.x.api.required = was
-    end
 end

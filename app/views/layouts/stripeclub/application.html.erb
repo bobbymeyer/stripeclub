@@ -1,0 +1,23 @@
+<%# The engine's layout is the host's layout with the engine's own things
+    added: its stylesheets and its destination. Everything else — the shell,
+    the mark, the door — is the host's, which is what makes this a tool
+    inside an application rather than an application of its own.
+
+    The host's layout is expected to render its-swiss's shell and to place
+    :sections in its masthead nav; the dummy application under test/ shows
+    the least a host has to do. %>
+
+<% content_for :head do %>
+  <%= stylesheet_link_tag "stripeclub/tokens", "stripeclub/components", "data-turbo-track": "reload" %>
+<% end %>
+
+<%# controller_path rather than controller_name: dressing a pattern and
+    editing its rows are Patterns::ColorwaysController and
+    Patterns::RowsController, whose names are "colorways" and "rows". The
+    library passes `current` in precisely because only the engine knows that
+    all of these are still Patterns. %>
+<% content_for :sections do %>
+  <%= nav_link_to "Patterns", patterns_path, current: controller_path.start_with?("stripeclub/patterns") %>
+<% end %>
+
+<%= render template: "layouts/application" %>

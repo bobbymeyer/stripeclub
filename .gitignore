@@ -38,3 +38,15 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# The dummy application's runtime files, and the lock a gem does not carry.
+/test/dummy/log/*
+!/test/dummy/log/.keep
+/test/dummy/tmp/*
+!/test/dummy/tmp/.keep
+/test/dummy/storage/*
+!/test/dummy/storage/.keep
+/test/dummy/db/*.sqlite3
+/test/dummy/db/*.sqlite3-*
+/Gemfile.lock
+/*.gem

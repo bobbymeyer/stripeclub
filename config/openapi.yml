@@ -1,0 +1,354 @@
+# The API, described. Served at api/v1/openapi and kept beside the routes it
+# describes; test/controllers/api/v1/openapi_test.rb fails when the two
+# disagree. The wire format is pinned longhand in contract_test.rb; this is
+# the same contract in the format every client generator reads.
+openapi: 3.1.0
+info:
+  title: Stripeclub
+  version: "1"
+  summary: A stripe pattern generator.
+  description: |
+    Patterns composed in value — how many slots, how wide each stripe, in
+    what order, at what angle — and dressed afterwards in a palette as a
+    colorway. Read-only: patterns are composed in the editor, and this is
+    for the tools that consume them, the way Stripeclub consumes Pandatone.
+
+    Every request but this description carries a Bearer token issued by the
+    host application. A pattern is addressed by id or by name. `?period=` is
+    how many user units a repeat is and `?scale=` how many pixels a unit is
+    worth: the only two things a consumer needs that the pattern does not
+    already say.
+servers:
+  - url: /stripeclub/api/v1
+    description: Relative to the host the engine is mounted in, at its mount path.
+security:
+  - bearer: []
+tags:
+  - name: patterns
+  - name: colorways
+
+paths:
+  /openapi:
+    get:
+      operationId: openapi
+      summary: This document.
+      security: []
+      responses:
+        "200":
+          description: The OpenAPI description of this API.
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /patterns:
+    get:
+      operationId: listPatterns
+      tags: [patterns]
+      summary: Every pattern, by name.
+      responses:
+        "200":
+          description: Summaries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PatternSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /patterns/{key}:
+    parameters:
+      - $ref: "#/components/parameters/patternKey"
+    get:
+      operationId: showPattern
+      tags: [patterns]
+      summary: One pattern's structure, or its reference form as SVG.
+      parameters:
+        - $ref: "#/components/parameters/period"
+      responses:
+        "200":
+          description: The pattern.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pattern"
+            image/svg+xml:
+              schema:
+                type: string
+              description: The reference form, drawn in value — a `<pattern>` element repeated by the renderer, seamless at any angle. Ask with a `.svg` extension.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /patterns/{key}/tile:
+    parameters:
+      - $ref: "#/components/parameters/patternKey"
+    get:
+      operationId: patternTile
+      tags: [patterns]
+      summary: One closing tile of the pattern, drawn in value.
+      description: The thing another tool actually repeats. JSON for its measurements, `.svg` for the tile itself, `.png` for the same tile rasterised.
+      parameters:
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/scale"
+      responses:
+        "200":
+          description: The tile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tile"
+            image/svg+xml:
+              schema:
+                type: string
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /colorways:
+    get:
+      operationId: listColorways
+      tags: [colorways]
+      summary: Every colorway.
+      responses:
+        "200":
+          description: Summaries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ColorwaySummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /colorways/{id}:
+    parameters:
+      - $ref: "#/components/parameters/colorwayId"
+    get:
+      operationId: showColorway
+      tags: [colorways]
+      summary: One colorway's rules and the colours they resolve to, or its reference form dressed.
+      parameters:
+        - $ref: "#/components/parameters/period"
+      responses:
+        "200":
+          description: The colorway.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Colorway"
+            image/svg+xml:
+              schema:
+                type: string
+              description: The reference form, dressed. Ask with a `.svg` extension.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Undressable"
+
+  /colorways/{id}/tile:
+    parameters:
+      - $ref: "#/components/parameters/colorwayId"
+    get:
+      operationId: colorwayTile
+      tags: [colorways]
+      summary: One closing tile, dressed.
+      parameters:
+        - $ref: "#/components/parameters/period"
+        - $ref: "#/components/parameters/scale"
+      responses:
+        "200":
+          description: The tile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tile"
+            image/svg+xml:
+              schema:
+                type: string
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Undressable"
+
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: A token issued by the host application. `Token <token>` is honored as well as `Bearer <token>`.
+
+  parameters:
+    patternKey:
+      name: key
+      in: path
+      required: true
+      description: A pattern's id or its name.
+      schema:
+        type: string
+    colorwayId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    period:
+      name: period
+      in: query
+      description: How many user units one repeat is. Clamped to 4..400.
+      schema:
+        type: integer
+        default: 60
+    scale:
+      name: scale
+      in: query
+      description: How many pixels a user unit is worth, for the raster. Clamped to 0.1..16.
+      schema:
+        type: number
+        default: 1
+
+  responses:
+    Unauthorized:
+      description: No token, or one that belongs to nobody.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: No such record.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Undressable:
+      description: The pattern has slots this colorway's palette cannot fill. There is nothing honest to draw.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, slot_count, palette_size]
+            properties:
+              error: { type: string }
+              slot_count: { type: integer }
+              palette_size:
+                oneOf:
+                  - type: integer
+                  - type: "null"
+
+  schemas:
+    PatternSummary:
+      type: object
+      required: [id, name, slot_count, angle]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slot_count: { type: integer, description: How many values the pattern draws. Slot 0 is the ground. }
+        angle: { type: number, description: Degrees. 90 is vertical, 0 horizontal. }
+    Pattern:
+      allOf:
+        - $ref: "#/components/schemas/PatternSummary"
+        - type: object
+          required: [row_depth, sequence, rows, colorways]
+          properties:
+            row_depth: { type: number }
+            sequence:
+              description: The repeat unit. Widths are proportions and sum to one; a stripe names the value it draws by rank.
+              type: array
+              items:
+                $ref: "#/components/schemas/Stripe"
+            rows:
+              type: array
+              items:
+                $ref: "#/components/schemas/Row"
+            colorways:
+              type: array
+              items:
+                $ref: "#/components/schemas/ColorwaySummary"
+    Stripe:
+      type: object
+      required: [position, value, width]
+      properties:
+        position: { type: integer }
+        value: { type: integer, description: The rank of the value drawn, 0 to n−1, the ground first. }
+        width: { type: number }
+    Row:
+      type: object
+      required: [position, height, phase, color_offset, mirrored, width_scale]
+      properties:
+        position: { type: integer }
+        height: { type: number }
+        phase: { type: number }
+        color_offset: { type: integer }
+        mirrored: { type: boolean }
+        width_scale:
+          type: array
+          description: A numerator and a denominator.
+          items: { type: integer }
+          minItems: 2
+          maxItems: 2
+    ColorwaySummary:
+      type: object
+      required: [id, pattern_id, palette_id, palette_name, invalidated]
+      properties:
+        id: { type: integer }
+        pattern_id: { type: integer }
+        palette_id: { type: integer, description: The palette's id in Pandatone. }
+        palette_name:
+          oneOf: [ { type: string }, { type: "null" } ]
+        invalidated: { type: boolean, description: Whether the pattern has outgrown the palette. }
+    Colorway:
+      allOf:
+        - $ref: "#/components/schemas/ColorwaySummary"
+        - type: object
+          required: [taken_at, rules, colors]
+          properties:
+            taken_at:
+              description: When the palette was snapshotted.
+              oneOf: [ { type: string, format: date-time }, { type: "null" } ]
+            rules:
+              description: One rule per value. A colorway is a rule over a palette, not a list of hexes; `colors` beside it is the answer for a consumer that does not need to know why.
+              type: array
+              items:
+                $ref: "#/components/schemas/Rule"
+            colors:
+              description: The hex each value resolves to, in rank order.
+              type: array
+              items: { type: string }
+    Rule:
+      type: object
+      required: [value, kind, settings]
+      properties:
+        value: { type: integer }
+        kind: { type: string, enum: [auto_value_match, assigned_slot, increment, random] }
+        settings: { type: object }
+    Tile:
+      type: object
+      required: [width, height, tiles, note]
+      properties:
+        width: { type: number, description: In user units. }
+        height: { type: number }
+        tiles: { type: boolean, description: Whether the repeat closes on this tile. }
+        note:
+          oneOf: [ { type: string }, { type: "null" } ]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }

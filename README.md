@@ -1,8 +1,79 @@
 # Stripeclub
 
-A stripe pattern generator. The second of a set of small design tools, and it
-consumes palettes from [Pandatone](https://github.com/bobbymeyer/pandatone)
-the way a later tool will consume this one.
+A stripe pattern generator, as a Rails engine. The second of a set of small
+design tools: it consumes palettes from
+[Pandatone](https://github.com/bobbymeyer/pandatone) the way a later tool
+will consume it.
+
+It was a standalone application until 0.1.0. Now it is one tool among
+several, mounted in a host that owns the server, the database, the account
+and the shell — see [design-chassis](https://github.com/bobbymeyer/design-chassis)
+for the one it was made for.
+
+## Mounting it
+
+```ruby
+# Gemfile — not on RubyGems; taken from the tag
+gem "stripeclub", github: "bobbymeyer/stripeclub", tag: "v0.1.0"
+
+# config/routes.rb
+mount Stripeclub::Engine, at: "/stripeclub"
+```
+
+Then `bin/rails db:migrate`: the engine's migrations run with the host's.
+Its tables are prefixed `stripeclub_`. `bin/rails stripeclub:seed` plants the
+patterns from the handoff's reference images.
+
+### What the host provides
+
+**The door.** Every screen inherits from the host's `ApplicationController`
+and every API endpoint from the host's `ApiController`; those decide who gets
+in. Point them elsewhere before the engine loads with
+`Stripeclub.base_controller_class` and `Stripeclub.api_base_controller_class`.
+
+**The shell and the theme.** The engine's layout fills the slots its-swiss
+leaves and renders the host's `layouts/application` around them, handing it
+Patterns through `content_for :sections`. The accent, the typeface and the
+value scale are the host's; the engine ships its grid and its components.
+
+**The palettes.** Stripeclub dresses a pattern in a palette it did not make,
+and where palettes come from is the host's to say:
+
+```ruby
+# config/initializers/stripeclub.rb
+Stripeclub.palette_source = -> { Pandatone.palettes.map { |p| Pandatone.palette(p[:id]) } }
+```
+
+`palette_source` is anything that answers `call` with an array of palettes in
+Pandatone's wire format — `id`, `name`, `tags`, and `colors` each with `id`,
+`name`, `hex` and `rgb`. Unset, it fetches them over HTTP from the Pandatone
+at `PANDATONE_URL` with `PANDATONE_TOKEN`, which is what a Stripeclub running
+on its own wants. A host with Pandatone in the same process hands over a
+lambda that asks it directly, and Stripeclub never learns the difference:
+it knows Pandatone by its wire format and by nothing else.
+
+The picker fetches the catalogue once, holds it for five minutes, and filters
+it here — palettes with fewer colours than the pattern has slots are demoted
+rather than hidden. Choosing takes a snapshot. What Pandatone does to that
+palette afterwards is drift — reported when you ask for it and never applied.
+Without a source that answers, every page still works except the picker,
+which says so.
+
+## Calling it from Ruby
+
+The same questions the API answers, as methods, with plain data back — the
+hashes the API serializes, never a record of the engine's.
+
+```ruby
+Stripeclub.patterns                         # => [ { id:, name:, slot_count:, angle: }, ... ]
+Stripeclub.pattern("Awning")                # => { ..., sequence:, rows:, colorways: }
+Stripeclub.colorways
+Stripeclub.colorway(12)                     # => { ..., rules:, colors: }
+Stripeclub.tile("Awning", colorway: 12)     # => { width:, height:, tiles:, note: }
+Stripeclub.tile_svg("Awning", period: 60)   # => "<svg ...>"
+```
+
+The API's read endpoints call these same methods, so the two cannot drift.
 
 ## The argument
 
@@ -52,39 +123,24 @@ A raster carries the geometry and not the filters. A displacement map and a
 noise multiply are things a renderer does to a picture, and a PNG arrives with
 no renderer attached — so the tile says so, in its `<desc>` and in the API.
 
-## Styling
-
-[its-swiss](https://github.com/bobbymeyer/its-swiss), tracked from `main`
-rather than pinned: Stripeclub is the second consumer its gem boundary was
-waiting for, so the two are developed against each other.
-
-```sh
-bundle update its-swiss
-```
-
-Everything the gem ships is inside a cascade layer and everything in
-`app/assets/stylesheets` is not, so the application wins without
-out-specifying anything. What Stripeclub found is in
-[ITS-SWISS-CANDIDATES.md](ITS-SWISS-CANDIDATES.md) — two real bugs, two
-boundary questions, and a note on what held.
-
 ## API
 
-Everything is under `/api/v1`, read-only. Collections are bare arrays, no
-envelope. `404` with `{"error": "Not found"}`, `401` with
+Everything is under `/api/v1` of the mount path — `/stripeclub/api/v1`
+where the engine is mounted at `/stripeclub`. Read-only. Collections are
+bare arrays, no envelope. `404` with `{"error": "Not found"}`, `401` with
 `{"error": "Unauthorized"}`, `422` with a reason when a colorway cannot dress
 its pattern.
 
 ```sh
-curl https://stripeclub.example.com/api/v1/patterns/Awning/tile.svg
+curl -H "Authorization: Bearer $TOKEN" \
+     https://studio.example.com/stripeclub/api/v1/patterns/Awning/tile.svg
 ```
 
-Stripeclub has no accounts, so the credential is one token rather than a user.
-Set `STRIPECLUB_API_TOKEN` and it is required; leave it unset and the API is
-open, which is what a tool on your own machine wants. **In production an unset
-token closes the API rather than opening it** — a design tool on the internet
-with its API open is not a decision anyone makes on purpose. `Token` works as
-well as `Bearer`. The session cookie is not accepted, because there isn't one.
+The token is the host's: the engine's API controllers inherit from the
+host's, and whatever that one refuses, the engine refuses. The API describes
+itself at `GET /api/v1/openapi`, which is the one endpoint not behind the
+token; `test/controllers/api/v1/openapi_test.rb` holds the description and
+the routes to each other.
 
 | Verb | Path | Notes |
 | ---- | ---- | ----- |
@@ -108,49 +164,24 @@ The wire format is pinned longhand in `test/controllers/api/v1/contract_test.rb`
 Treat a failure there as a version bump rather than a fix — the way to change
 v1 is to add v2.
 
-## Running it
-
-```sh
-bin/setup
-bin/rails db:seed     # twelve patterns to look at
-bin/rails server
-```
-
-`/its-swiss/specimen` in development renders every component the gem ships.
-
-### Dressing a pattern
-
-Composing needs nothing from Pandatone. Choosing a palette does:
-
-```sh
-cd ../pandatone && bin/rails server -p 3222   # its API token is on /account
-PANDATONE_URL=http://127.0.0.1:3222 PANDATONE_TOKEN=… bin/rails server
-```
-
-The picker fetches the catalogue once, holds it for five minutes, and filters
-it here — palettes with fewer colours than the pattern has slots are demoted
-rather than hidden, because taking a slot away with − brings them back into
-range. Palettes are shown as the grays of their own lightness: the preview is
-where colour belongs, and what a palette is for here is how its values are
-spread.
-
-Choosing takes a snapshot. What Pandatone does to that palette afterwards is
-drift — reported when you ask for it and never applied, because a design that
-was finished should not change because someone else opened another tool.
-
-Without either variable set, every page still works except the picker, which
-says so.
-
 ## Tests
+
+Tests come first, and a guard is kept only if breaking what it guards makes it
+fail. They run against the dummy host under `test/dummy`, which opens its
+screens to a cookie and its API to one token — the least a host can be.
 
 ```sh
 bin/rails test
 ```
 
-Tests come first, and a guard is kept only if breaking what it guards makes it
-fail — the commit messages say which mutation was used on which guard.
-
 The suite reads structure rather than pixels. There are golden SVG documents
 in `test/fixtures/files/svg`, compared byte for byte and regenerated with
 `GOLDEN=overwrite`; read the diff before accepting one. There are no pixel
-tests.
+tests. Nothing in the suite reaches the network: the HTTP palette source is
+stubbed at the wire with WebMock.
+
+## Styling
+
+[its-swiss](https://github.com/bobbymeyer/its-swiss), pinned `~> 0.7` in the
+gemspec. What Stripeclub found in it as the second consumer is in
+[ITS-SWISS-CANDIDATES.md](ITS-SWISS-CANDIDATES.md).
