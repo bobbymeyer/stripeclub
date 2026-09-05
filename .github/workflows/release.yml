@@ -1,0 +1,56 @@
+name: Release
+
+# Cut a version by pushing its tag:
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# Stripeclub is not published to RubyGems. A host takes it from the tag:
+#
+#   gem "stripeclub", github: "bobbymeyer/stripeclub", tag: "v0.1.0"
+#
+# So a release is the tag, checked, with a GitHub release opened on it that
+# carries the built gem for anything that wants a file.
+on:
+  push:
+    tags: [ "v*" ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # to create the GitHub release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      # The tag is what says which version is being cut, so it has to agree
+      # with the version the gem would build. A mismatch here is a release
+      # that goes out under a number nobody chose.
+      - name: The tag and the gemspec agree
+        run: |
+          tagged="${GITHUB_REF_NAME#v}"
+          built="$(ruby -Ilib -e 'require "stripeclub/version"; print Stripeclub::VERSION')"
+          test "$tagged" = "$built" || {
+            echo "tag $GITHUB_REF_NAME does not match Stripeclub::VERSION $built"
+            exit 1
+          }
+
+      - run: bin/rubocop
+
+      - run: bin/rails test
+
+      - run: gem build stripeclub.gemspec
+
+      - name: Open the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" stripeclub-*.gem \
+            --title "$GITHUB_REF_NAME" \
+            --notes "See CHANGELOG.md. Take it with: gem \"stripeclub\", github: \"bobbymeyer/stripeclub\", tag: \"$GITHUB_REF_NAME\""

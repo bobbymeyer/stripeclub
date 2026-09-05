@@ -1,19 +1,20 @@
-ENV["RAILS_ENV"] ||= "test"
-require_relative "../config/environment"
+# Configure Rails Environment
+ENV["RAILS_ENV"] = "test"
+
+require_relative "../test/dummy/config/environment"
+ActiveRecord::Migrator.migrations_paths = [ File.expand_path("../test/dummy/db/migrate", __dir__) ]
+ActiveRecord::Migrator.migrations_paths << File.expand_path("../db/migrate", __dir__)
 require "rails/test_help"
 
-# Nothing in the suite is allowed out to the network. Localhost stays open
-# because the system tests drive a browser against a server on it.
+# Nothing in the suite is allowed out to the network.
 require "webmock/minitest"
 WebMock.disable_net_connect!(allow_localhost: true)
 
+ActiveSupport::TestCase.file_fixture_path = File.expand_path("fixtures/files", __dir__)
+
 module ActiveSupport
   class TestCase
-    # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors)
-
-    # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
-    fixtures :all
 
     # A sequence with exactly these widths, in order, one value per stripe.
     #
@@ -23,7 +24,7 @@ module ActiveSupport
     # past validation on purpose: these tests ask whether the sequence refuses
     # them, which it cannot do if the write already did.
     def sequence_of(*widths)
-      pattern = Pattern.create!(name: "Widths", slot_count: widths.size)
+      pattern = Stripeclub::Pattern.create!(name: "Widths", slot_count: widths.size)
 
       pattern.sequence.stripes.each_with_index do |stripe, index|
         stripe.update_column(:width, widths[index])
@@ -32,7 +33,8 @@ module ActiveSupport
       pattern.sequence.tap { |sequence| sequence.stripes.reload }
     end
 
-    # Pandatone, configured and answering.
+    # Pandatone, configured and answering over HTTP — the engine's default
+    # palette source.
     #
     # Stubbed at the wire rather than below it: what is worth testing about
     # reaching another tool is the request as it goes out and the shape that
@@ -44,16 +46,16 @@ module ActiveSupport
 
       palettes.each { |(id, name), hexes| stub_palette(url, id, name, hexes) }
 
-      was = Rails.application.config.x.pandatone.to_h
-      Rails.application.config.x.pandatone.url = url
-      Rails.application.config.x.pandatone.token = token
-      Pandatone::Catalog.forget!
+      was = [ Stripeclub.pandatone_url, Stripeclub.pandatone_token, Stripeclub.palette_source ]
+      Stripeclub.pandatone_url = url
+      Stripeclub.pandatone_token = token
+      Stripeclub.palette_source = -> { Stripeclub::Pandatone::Client.configured.palettes_json }
+      Stripeclub::Pandatone::Catalog.forget!
 
       yield
     ensure
-      Rails.application.config.x.pandatone.url = was[:url]
-      Rails.application.config.x.pandatone.token = was[:token]
-      Pandatone::Catalog.forget!
+      Stripeclub.pandatone_url, Stripeclub.pandatone_token, Stripeclub.palette_source = was
+      Stripeclub::Pandatone::Catalog.forget!
     end
 
     def stub_palette(url, id, name, hexes)
@@ -73,13 +75,58 @@ module ActiveSupport
     # the hex is the only part of a colour these tests are ever about.
     def pandatone_palette(*hexes, id: 7, name: "Sample")
       colors = hexes.each_with_index.map do |hex, index|
-        Pandatone::Color.new(
+        Stripeclub::Pandatone::Color.new(
           id: (id * 100) + index, name: "Colour #{index}", hex: hex,
           red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16)
         )
       end
 
-      Pandatone::Palette.new(id: id, name: name, colors: colors)
+      Stripeclub::Pandatone::Palette.new(id: id, name: name, colors: colors)
+    end
+  end
+end
+
+class ActionDispatch::IntegrationTest
+  # The engine's routes, by their own names. The dummy application mounts the
+  # engine at /stripeclub, and these helpers already know that.
+  include Stripeclub::Engine.routes.url_helpers
+
+  # The door is the host's. The dummy host under test/ opens its screens to a
+  # cookie and its API to one token, and every test starts through both:
+  # Stripeclub has nothing to say about who gets in. The one test that is
+  # about the door signs out first.
+  setup do
+    sign_in_as
+    sign_in_client
+  end
+
+  def sign_in_as(_user = nil)
+    cookies[:signed_in] = "yes"
+  end
+
+  def sign_out
+    cookies.delete(:signed_in)
+  end
+
+  def sign_in_client(_user = nil)
+    @api_token = Dummy::API_TOKEN
+  end
+
+  def sign_out_client
+    @api_token = nil
+  end
+
+  def json
+    JSON.parse(response.body)
+  end
+
+  %w[ get post patch put delete ].each do |verb|
+    define_method(verb) do |path, **options|
+      if @api_token
+        options[:headers] = { "Authorization" => "Bearer #{@api_token}" }.merge(options[:headers] || {})
+      end
+
+      super(path, **options)
     end
   end
 end

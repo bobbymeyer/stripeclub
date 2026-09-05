@@ -1,0 +1,274 @@
+<% content_for :title, @pattern.name %>
+<% content_for :main_class, "grid" %>
+
+<header class="page-head run">
+  <h1><%= @pattern.name %></h1>
+  <%= link_to "Rename", edit_pattern_path(@pattern), class: "button button--quiet" %>
+</header>
+
+<figure class="preview-figure">
+  <%= pattern_preview @pattern, size: 320, period: 80 %>
+  <figcaption>
+    Drawn in value, paper to ink. No palette has been chosen, and the pattern is
+    complete without one.
+  </figcaption>
+</figure>
+
+<div class="detail stack">
+  <dl class="pairs">
+    <dt>Slots</dt>
+    <dd><%= pluralize @pattern.slot_count, "value" %>, ranked from the ground</dd>
+
+    <dt>Angle</dt>
+    <dd><%= angle_in_words @pattern %></dd>
+
+    <dt>Repeat</dt>
+    <dd><%= pluralize @pattern.sequence.stripes.size, "stripe" %>, summing to one</dd>
+  </dl>
+
+  <table class="table repeat">
+    <caption>The repeat, in order along the stripe normal.</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="numeric ordinal">#</th>
+        <th scope="col">Draws</th>
+        <th scope="col" class="numeric">Width</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @pattern.sequence.stripes.each_with_index do |stripe, index| %>
+        <tr>
+          <td class="numeric ordinal"><%= index + 1 %></td>
+          <td><%= slot_name stripe.value %></td>
+          <td class="numeric"><%= number_to_percentage stripe.width * 100, precision: 2 %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <section class="slots">
+    <table class="table">
+      <caption>
+        The slots, ranked from the ground. A slot bound to its rank is still doing value
+        work; one bound to a rule takes its colour from the palette's order instead.
+      </caption>
+      <thead>
+        <tr><th scope="col">Slot</th><th scope="col">Binding</th></tr>
+      </thead>
+      <tbody>
+        <% @pattern.values.each do |value| %>
+          <tr>
+            <td><%= slot_swatch value %> <%= slot_name value %></td>
+            <td><%= drawn_by?(@pattern, value) ? "By rank" : "By rank, drawn by nothing" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="colorways stack">
+    <div class="run">
+      <%= link_to "Dress this pattern", new_pattern_colorway_path(@pattern), class: "button" %>
+      <span class="hint">
+        Colour arrives from Pandatone as a rule over a snapshot, never as a list of hexes.
+      </span>
+    </div>
+
+    <% @pattern.colorways.each do |colorway| %>
+      <article class="colorway">
+        <h2><%= colorway.snapshot.palette_name %></h2>
+
+        <% if colorway.invalidated? %>
+          <p class="hint">
+            Invalid: the pattern has <%= @pattern.slot_count %> slots and this palette has
+            <%= colorway.snapshot.size %> colours. Kept, not deleted — take a slot away and it comes back.
+          </p>
+        <% else %>
+          <%= pattern_preview colorway, size: 180, period: 45, class: "preview--inline" %>
+
+          <table class="table">
+            <thead><tr><th scope="col">Slot</th><th scope="col">Rule</th></tr></thead>
+            <tbody>
+              <% @pattern.values.each do |value| %>
+                <tr>
+                  <td><%= slot_swatch value, colorway: colorway %> <%= slot_name value %></td>
+                  <td><%= rule_name colorway.rule_for(value) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+
+        <div class="run">
+          <%= button_to "Check for drift", drift_pattern_colorway_path(@pattern, colorway),
+                method: :patch, class: "button button--quiet" %>
+          <%= button_to "Remove", pattern_colorway_path(@pattern, colorway), method: :delete,
+                class: "button button--quiet" %>
+          <span class="hint">Taken <%= colorway.snapshot.taken_at.to_fs(:long) %></span>
+        </div>
+      </article>
+    <% end %>
+  </section>
+
+  <section class="rows">
+    <% if @pattern.rowed? %>
+      <%= form_with url: pattern_row_block_path(@pattern), method: :patch do |form| %>
+      <table class="table">
+        <caption>
+          Rows are the vertical seam: a stripe at an angle has no vertical period of its own,
+          and the band boundaries supply one.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="numeric ordinal">#</th>
+            <th scope="col">Phase</th>
+            <th scope="col">Colour</th>
+            <th scope="col">Scale</th>
+            <th scope="col">Mirrored</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @pattern.rows.each do |row| %>
+            <tr>
+              <td class="numeric ordinal"><%= row.position + 1 %></td>
+              <td><%= row_field row, :phase, label: "Phase, row #{row.position + 1}",
+                        step: 0.01, min: 0, max: 0.99 %></td>
+              <td><%= row_field row, :color_offset, label: "Colour offset, row #{row.position + 1}", step: 1 %></td>
+              <td class="scale">
+                <%= row_field row, :width_numerator, label: "Scale numerator, row #{row.position + 1}", min: 1 %>
+                <span aria-hidden="true">/</span>
+                <%= row_field row, :width_denominator, label: "Scale denominator, row #{row.position + 1}", min: 1 %>
+              </td>
+              <td><%= row_mirror_field row %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+        <%= form.submit "Save rows", class: "button" %>
+      <% end %>
+    <% else %>
+      <p class="hint">
+        No rows. Optional — a pattern without them is a pattern, and they are what lets an
+        axis-aligned tile carry an angle it otherwise could not.
+      </p>
+    <% end %>
+
+    <div class="run">
+      <%= form_with url: pattern_row_block_path(@pattern), method: :post, class: "form form--inline" do |divide| %>
+        <div class="field field--inline">
+          <label class="visually-hidden" for="row_count">How many rows</label>
+          <%= divide.number_field :count, id: "row_count", value: [ @pattern.rows.size, 4 ].max,
+                min: 1, max: Stripeclub::Patterns::RowsController::MOST %>
+        </div>
+        <%= divide.submit @pattern.rowed? ? "Divide again" : "Break into rows", class: "button" %>
+      <% end %>
+
+      <% if @pattern.rowed? %>
+        <%= button_to "Remove rows", pattern_row_block_path(@pattern), method: :delete,
+              class: "button button--quiet" %>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="tiling">
+    <table class="table tiling__modes">
+      <caption>
+        Whether the repeat closes on itself, per output mode, <strong>on a square tile</strong>.
+        A status and not a rule — nothing here refuses to render, and an export free to choose
+        its own shape closes at any angle.
+      </caption>
+      <thead>
+        <tr><th scope="col">Output</th><th scope="col">Tiling</th></tr>
+      </thead>
+      <tbody>
+        <% tiling_modes(@pattern).each do |mode, tiling| %>
+          <tr class="<%= "tiling--refused" unless tiling.seamless? %>">
+            <td><%= tiling_mode_name mode %></td>
+            <td><%= tiling_status_words tiling %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% unbroken = Stripeclub::Tiling.new(@pattern, mode: :unbroken) %>
+    <p class="hint"><%= unbroken.reason %></p>
+
+    <% unless unbroken.seamless? %>
+      <%= button_to "Snap to #{unbroken.fitted_angle.round(3)}°",
+            pattern_tiling_path(@pattern), method: :patch, class: "button" %>
+    <% end %>
+  </section>
+
+  <section class="imperfection">
+    <% rough = @pattern.imperfection || Stripeclub::Imperfection.new(pattern: @pattern) %>
+
+    <%= its_swiss_form_with model: rough, url: pattern_imperfection_path(@pattern), method: :patch,
+          class: "form" do |form| %>
+      <p class="hint">
+        Round two: clean geometry plus post-effects. Nothing here touches the composition —
+        the widths stay what you typed, and turning it off gives the clean pattern back.
+      </p>
+
+      <div class="rough-grid">
+        <%= form.number_field :wobble, step: 0.01, min: 0, max: 1,
+              hint: "How far an edge is pushed, as a proportion of the repeat." %>
+        <%= form.number_field :wobble_frequency, step: 0.005, min: 0.001, max: 4,
+              hint: "How close together the wobbles are." %>
+        <%= form.number_field :wobble_octaves, step: 1, min: 1, max: 5,
+              hint: "How many scales of wobble are layered." %>
+        <%= form.number_field :variance, step: 0.05, min: 0, max: Stripeclub::Imperfection::MOST_VARIANCE,
+              hint: "How much a width may be off, as a proportion of itself. Still sums to one." %>
+        <%= form.number_field :texture, step: 0.02, min: 0, max: 1,
+              hint: "How strongly a tiling noise is multiplied over the whole." %>
+        <%= form.number_field :texture_frequency, step: 0.05, min: 0.001, max: 4,
+              hint: "How fine the texture is." %>
+        <%= form.number_field :seed, step: 1,
+              hint: "The same seed draws the same imperfection, every time." %>
+      </div>
+
+      <div class="run">
+        <%= form.submit rough.persisted? ? "Set" : "Roughen" %>
+        <% if rough.persisted? %>
+          <%= button_to "Make it clean", pattern_imperfection_path(@pattern), method: :delete,
+                class: "button button--quiet" %>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="export">
+    <% tile = Stripeclub::Tile.new(Stripeclub::ValueScale.new(@pattern), period: Stripeclub::SvgPattern::PERIOD) %>
+    <p class="hint">
+      One tile, <%= tile.width.round(2) %> × <%= tile.height.round(2) %>, for whatever is going to
+      repeat it. Free to choose its own size, a tile always closes — the constraint only bites
+      when the size is fixed, which is what Snap To Tiling is for.
+    </p>
+
+    <div class="run">
+      <%= link_to "Tile, SVG", pattern_tile_path(@pattern, format: :svg), class: "button button--quiet" %>
+      <%= link_to "Tile, PNG", pattern_tile_path(@pattern, format: :png, scale: 4),
+            class: "button button--quiet" %>
+      <%= link_to "Reference form", pattern_tile_path(@pattern, format: :svg, form: "reference"),
+            class: "button button--quiet" %>
+    </div>
+
+    <% @pattern.colorways.reject(&:invalidated?).each do |colorway| %>
+      <div class="run">
+        <span class="hint"><%= colorway.snapshot.palette_name %></span>
+        <%= link_to "SVG", pattern_tile_path(@pattern, format: :svg, colorway: colorway.id),
+              class: "button button--quiet" %>
+        <%= link_to "PNG", pattern_tile_path(@pattern, format: :png, colorway: colorway.id, scale: 4),
+              class: "button button--quiet" %>
+      </div>
+    <% end %>
+  </section>
+
+  <div class="run">
+    <%= button_to "Add a slot", pattern_slot_path(@pattern), class: "button" %>
+    <%= button_to "Remove the last", pattern_slot_path(@pattern), method: :delete,
+          class: "button button--quiet" %>
+    <%= button_to "Take away", @pattern, method: :delete, class: "button button--danger",
+          form: { data: { turbo_confirm: "Take #{@pattern.name} away for good?" } } %>
+  </div>
+</div>
