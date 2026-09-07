@@ -9,13 +9,13 @@ module Stripeclub
     test "the ground is paper and the last slot is ink" do
       scale = ValueScale.new(Pattern.create!(name: "Six", slot_count: 6))
 
-      assert_in_delta 0.98, Luminance.of_hex(scale.colors.first.hex), 0.005
-      assert_in_delta 0.18, Luminance.of_hex(scale.colors.last.hex), 0.005
+      assert_in_delta 0.98, Pandatone::Dresser::Luminance.of_hex(scale.colors.first.hex), 0.005
+      assert_in_delta 0.18, Pandatone::Dresser::Luminance.of_hex(scale.colors.last.hex), 0.005
     end
 
     test "the steps between them are even in lightness" do
       scale = ValueScale.new(Pattern.create!(name: "Five", slot_count: 5))
-      steps = scale.colors.map { |color| Luminance.of_hex(color.hex) }
+      steps = scale.colors.map { |color| Pandatone::Dresser::Luminance.of_hex(color.hex) }
       gaps = steps.each_cons(2).map { |lighter, darker| lighter - darker }
 
       assert_operator gaps.max - gaps.min, :<, 0.01, "the steps should be even"
@@ -25,7 +25,7 @@ module Stripeclub
     test "a pattern of one slot is all ground" do
       scale = ValueScale.new(Pattern.create!(name: "Ground", slot_count: 1))
 
-      assert_in_delta 0.98, Luminance.of_hex(scale.colors.sole.hex), 0.005
+      assert_in_delta 0.98, Pandatone::Dresser::Luminance.of_hex(scale.colors.sole.hex), 0.005
     end
 
     # It dresses a pattern the way a colorway does, so the renderer does not

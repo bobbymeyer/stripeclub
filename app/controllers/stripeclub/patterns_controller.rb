@@ -1,15 +1,23 @@
 module Stripeclub
   class PatternsController < ApplicationController
-    # Ten is what fits above the fold at the measure the page is set to. It is a
-    # layout decision, so it lives beside the layout and not in the model.
-    PER_PAGE = 10
+    # Twelve is two rows of cards at the page's width. It is a layout
+    # decision, so it lives beside the layout and not in the model.
+    PER_PAGE = 12
 
     before_action :set_pattern, only: %i[ show edit update destroy ]
 
+    # Narrowed by a name as typed, by which way the stripes lean, and put in
+    # one of three orders; the filters are the library's registers and the
+    # scopes are the pattern's.
     def index
-      @pages = [ (Pattern.count / PER_PAGE.to_f).ceil, 1 ].max
+      @sort = Pattern::SORTS.key?(params[:sort]) ? params[:sort] : "name"
+      @lean = Pattern::LEANS.key?(params[:lean]) ? params[:lean] : nil
+      @total = Pattern.count
+
+      narrowed = Pattern.name_matching(params[:q]).leaning(@lean)
+      @pages = [ (narrowed.count / PER_PAGE.to_f).ceil, 1 ].max
       @page = params[:page].to_i.clamp(1, @pages)
-      @patterns = Pattern.order(:name).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+      @patterns = narrowed.sorted(@sort).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
     end
 
     def show

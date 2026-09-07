@@ -37,27 +37,24 @@ Patterns through `content_for :sections`. The accent, the typeface and the
 value scale are the host's; the engine ships its grid and its components.
 
 **The palettes.** Stripeclub dresses a pattern in a palette it did not make,
-and where palettes come from is the host's to say:
-
-```ruby
-# config/initializers/stripeclub.rb
-Stripeclub.palette_source = -> { Pandatone.palettes.map { |p| Pandatone.palette(p[:id]) } }
-```
-
-`palette_source` is anything that answers `call` with an array of palettes in
-Pandatone's wire format — `id`, `name`, `tags`, and `colors` each with `id`,
-`name`, `hex` and `rgb`. Unset, it fetches them over HTTP from the Pandatone
-at `PANDATONE_URL` with `PANDATONE_TOKEN`, which is what a Stripeclub running
-on its own wants. A host with Pandatone in the same process hands over a
-lambda that asks it directly, and Stripeclub never learns the difference:
-it knows Pandatone by its wire format and by nothing else.
+and the asking is Pandatone's own: `Pandatone::Dresser`, which the gemspec
+depends on. With no `PANDATONE_URL` the dresser asks the Pandatone in the
+same process through its public methods, which is what a host that mounts
+both tools gets without writing a line; with one, it asks that Pandatone over
+HTTP with `PANDATONE_TOKEN`. Either way Stripeclub knows Pandatone by its
+wire format and by nothing else.
 
 The picker fetches the catalogue once, holds it for five minutes, and filters
 it here — palettes with fewer colours than the pattern has slots are demoted
 rather than hidden. Choosing takes a snapshot. What Pandatone does to that
 palette afterwards is drift — reported when you ask for it and never applied.
-Without a source that answers, every page still works except the picker,
+Without a Pandatone that answers, every page still works except the picker,
 which says so.
+
+**The script.** its-swiss pins two Stimulus controllers from its engine, and
+the host registers them once in its `controllers/index.js`:
+`its-swiss-clipboard` and `its-swiss-live-search`, the second for the search
+on the patterns index. Stripeclub ships no JavaScript of its own.
 
 ## Calling it from Ruby
 
@@ -182,6 +179,10 @@ stubbed at the wire with WebMock.
 
 ## Styling
 
-[its-swiss](https://github.com/bobbymeyer/its-swiss), pinned `~> 0.7` in the
+[its-swiss](https://github.com/bobbymeyer/its-swiss), pinned `~> 0.8` in the
 gemspec. What Stripeclub found in it as the second consumer is in
-[ITS-SWISS-CANDIDATES.md](ITS-SWISS-CANDIDATES.md).
+[ITS-SWISS-CANDIDATES.md](ITS-SWISS-CANDIDATES.md); most of it went into the
+gem at 0.7 and 0.8, and the file says which. The page head, the filter block
+and the cards on the index are the library's; the picker and the swatches are
+Pandatone's dresser's; what is in `app/assets/stylesheets/stripeclub/` is
+what a stripe pattern lays out that neither could know.

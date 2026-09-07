@@ -79,13 +79,13 @@ module Stripeclub
       # telling apart on sight.
 
       if (pattern = Pattern.find_by(name: DRESSED)) && pattern.colorways.none?
-        palette = Pandatone::Palette.new(
+        palette = Pandatone::Dresser::Palette.new(
           id: -1, name: "Deck Chair, in four",
           colors: [
             [ "Signal red", "#C1272D" ], [ "Cream", "#FAF8F4" ],
             [ "Ink", "#12120F" ], [ "Gold", "#E3B505" ]
           ].each_with_index.map do |(name, hex), index|
-            Pandatone::Color.new(
+            Pandatone::Dresser::Color.new(
               id: index, name: name, hex: hex,
               red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16)
             )
@@ -113,11 +113,11 @@ module Stripeclub
           pattern.sequence.stripes[index].update_column(:width, width)
         end
 
-        palette = Pandatone::Palette.new(id: -2, name: "Rêve & Bloom", colors: [
+        palette = Pandatone::Dresser::Palette.new(id: -2, name: "Rêve & Bloom", colors: [
           [ "Cream", "#F4EFE4" ], [ "Rose", "#D98BA0" ], [ "Sage", "#8FA68E" ],
           [ "Terracotta", "#C4714F" ], [ "Plum", "#6B4C63" ]
         ].each_with_index.map do |(name, hex), index|
-          Pandatone::Color.new(
+          Pandatone::Dresser::Color.new(
             id: index, name: name, hex: hex,
             red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16)
           )

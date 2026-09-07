@@ -48,7 +48,7 @@ module Stripeclub
       original = palette("#FAF8F4", "#12120F")
       snapshot = Colorway.create!(pattern: @pattern, palette: original).snapshot
 
-      reordered = Pandatone::Palette.new(
+      reordered = Pandatone::Dresser::Palette.new(
         id: original.id, name: original.name, colors: original.colors.reverse
       )
 

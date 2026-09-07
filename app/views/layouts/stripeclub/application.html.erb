@@ -1,15 +1,21 @@
 <%# The engine's layout is the host's layout with the engine's own things
-    added: its stylesheets and its destination. Everything else — the shell,
-    the mark, the door — is the host's, which is what makes this a tool
-    inside an application rather than an application of its own.
+    added: its stylesheets, its destination, and the grid its pages are laid
+    out on. Everything else — the shell, the mark, the door — is the host's,
+    which is what makes this a tool inside an application rather than an
+    application of its own.
 
     The host's layout is expected to render its-swiss's shell and to place
     :sections in its masthead nav; the dummy application under test/ shows
     the least a host has to do. %>
 
 <% content_for :head do %>
-  <%= stylesheet_link_tag "stripeclub/tokens", "stripeclub/components", "data-turbo-track": "reload" %>
+  <%# The dresser's stylesheet is Pandatone's, for the picker and the
+      swatches; the other two are this engine's. Unlayered, like a host's own,
+      so they win over the library wherever the two meet. %>
+  <%= stylesheet_link_tag "stripeclub/tokens", "stripeclub/components", "pandatone/dresser", "data-turbo-track": "reload" %>
 <% end %>
+
+<% content_for :main_class, "grid" %>
 
 <%# controller_path rather than controller_name: dressing a pattern and
     editing its rows are Patterns::ColorwaysController and

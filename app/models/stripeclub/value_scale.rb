@@ -60,8 +60,8 @@ module Stripeclub
 
     private
       def gray_at(position)
-        Pandatone::Color.new(
-          id: position, name: "Value #{position}", hex: Luminance.gray(lightness_for(position))
+        Pandatone::Dresser::Color.new(
+          id: position, name: "Value #{position}", hex: Pandatone::Dresser::Luminance.grey(lightness_for(position))
         )
       end
 

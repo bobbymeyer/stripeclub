@@ -1,0 +1,13 @@
+<%# locals: (pattern:) %>
+<%# One pattern on the index: the tile, drawn in value, over its name and the
+    two numbers that are the whole of its structure. The tile is square, so
+    the figure says so and its box is whole lines at any width. %>
+<li class="card pattern-card" id="<%= dom_id(pattern) %>">
+  <%= link_to pattern, class: "card__link" do %>
+    <figure class="card__figure figure" style="--ratio: 1">
+      <%= pattern_preview pattern, size: 240, period: 60, bare: true %>
+    </figure>
+    <span class="card__name"><%= pattern.name %></span>
+  <% end %>
+  <span class="card__meta"><%= pluralize pattern.slot_count, "slot" %> · <%= angle_in_words pattern %></span>
+</li>

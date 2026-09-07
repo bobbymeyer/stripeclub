@@ -85,11 +85,16 @@ module Stripeclub
       end
     end
 
-    test "with no Pandatone configured at all the picker still renders" do
+    # No URL means the Pandatone in this process, which the dummy host has and
+    # has put nothing in. The picker renders, with nothing to choose.
+    test "with no Pandatone url the picker asks the one in this process" do
+      Pandatone::Dresser::Catalog.forget!
+
       get new_pattern_colorway_path(@pattern)
 
       assert_response :success
-      assert_select ".empty", text: /no Pandatone url/
+      assert_select "section.palettes", 1
+      assert_select "section.palettes .empty", text: "None."
     end
 
     # Reported, never applied. A design that was finished should not change
@@ -115,7 +120,7 @@ module Stripeclub
 
         patch drift_pattern_colorway_path(@pattern, @pattern.colorways.sole)
 
-        assert_match(/unchanged since this snapshot/, flash[:notice])
+        assert_match(/is as it was when this snapshot was taken/, flash[:notice])
       end
     end
 

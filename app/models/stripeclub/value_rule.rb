@@ -4,44 +4,27 @@
 # on: a colorway that stored hexes would be wrong the moment the structure
 # under it changed, and a rule is still right.
 #
-# Only one of the four reads the value's rank. The other three read a position
-# in the palette — which is why a palette reordered in Pandatone counts as
-# drift even when every colour in it is unchanged.
+# Two of the four kinds are every consumer's, and Pandatone's dresser has them:
+# Auto-Value-Match reads the value's rank, Assigned Slot a position in the
+# palette. The other two are a stripe pattern's own, because they vary along
+# the repeat: Random draws once per stripe and Increment counts them.
 module Stripeclub
   class ValueRule < ApplicationRecord
-    KINDS = %w[ auto_value_match assigned_slot random increment ].freeze
+    include Pandatone::Dresser::Rule
 
-    belongs_to :colorway
+    KINDS = (Pandatone::Dresser::Rule::KINDS + %w[ random increment ]).freeze
+
+    def self.kinds = KINDS
+
+    kind_predicates "random", "increment"
+
     belongs_to :value
 
-    # Predicates written out rather than taken from `enum`. An enum over these
-    # four names generates `increment!`, and Active Record already has one — it
-    # is the method Pattern uses to move a slot count. The bang methods are no
-    # loss: a rule's kind is set with its settings or not at all, since three of
-    # the four are meaningless without them.
-    KINDS.each { |name| define_method("#{name}?") { kind == name } }
-
-    validates :kind, inclusion: { in: KINDS }
-
-    # A rule that has said nothing still has an empty settings hash rather than
-    # no hash. The default rule is built and never saved, so nothing else would
-    # ever give it one — and a consumer reading `"settings": null` would have to
-    # know that means the same as `{}`.
-    attribute :settings, default: -> { {} }
-
-    store_accessor :settings, :slot, :subset, :seed, :start, :step
+    store_accessor :settings, :subset, :seed, :start, :step
 
     before_validation :seed_itself, if: :random?
 
-    validate :settings_fit_the_palette
-
-    # Whether the value is still doing value work. Auto-Value-Match resolves
-    # through the luminance rank, so the value's place in the ladder is what
-    # decides its colour; the other three resolve through a position in the
-    # palette, and the rank stops mattering. The editor marks the difference.
-    def binds_to_rank?
-      auto_value_match?
-    end
+    validate :repeat_settings_fit_the_palette
 
     # `offset` is a row's colour offset, and it moves the answer along by that
     # many colours whichever rule produced it.
@@ -51,8 +34,8 @@ module Stripeclub
     # offset that walked out of it would break the promise a row at a time.
     def color_for(stripe, offset: 0)
       case kind
-      when "auto_value_match" then palette.ranked[(rank + offset) % size]
-      when "assigned_slot" then at(slot + offset)
+      when "auto_value_match" then ranked_along(offset)
+      when "assigned_slot" then assigned_color(offset)
       when "random" then at(subset[(draws[stripe.position % draws.size] + offset) % subset.size])
       when "increment" then at(start + (stripe.position * step) + offset)
       end
@@ -76,25 +59,13 @@ module Stripeclub
     end
 
     private
-      def palette
-        colorway.snapshot.palette
-      end
+      # Auto-Value-Match by the dresser's rank, then the row's offset moves the
+      # answer along the ranked palette rather than its stored order.
+      def ranked_along(offset)
+        return color_at_rank(value.position, of: colorway.slot_count) if offset.zero?
 
-      def size
-        colorway.snapshot.size
-      end
-
-      def at(index)
-        palette.colors[index % size]
-      end
-
-      # Auto-Value-Match, and the only place a rank is read. Both ends of the
-      # palette are kept when it has more colours than the pattern has slots.
-      def rank
-        slots = colorway.pattern.slot_count
-        return 0 if slots <= 1
-
-        (value.position * (size - 1)).fdiv(slots - 1).round
+        ranked = colorway.snapshot.palette.ranked
+        ranked[(ranked.index(color_at_rank(value.position, of: colorway.slot_count)) + offset) % size]
       end
 
       # One seed, one stream of draws, one tile. Taken in order rather than
@@ -108,18 +79,18 @@ module Stripeclub
         [ colorway.pattern.sequence.stripes.size, 1 ].max
       end
 
-      # A random rule with no seed would draw differently on every render, which
-      # is not a pattern. It picks one rather than refusing, because the seed is
-      # not a decision anybody wants to make — only one that has to be kept.
+      # A random rule with no seed would draw differently on every render,
+      # which is not a pattern. It picks one rather than refusing, because the
+      # seed is not a decision anybody wants to make — only one that has to be
+      # kept.
       def seed_itself
         self.seed ||= SecureRandom.random_number(1 << 31)
       end
 
-      def settings_fit_the_palette
+      def repeat_settings_fit_the_palette
         return if colorway.nil? || colorway.snapshot.nil?
 
         case kind
-        when "assigned_slot" then check_index(:slot, slot)
         when "increment" then check_increment
         when "random" then check_random
         end
@@ -137,15 +108,6 @@ module Stripeclub
         return errors.add(:subset, "has to be at least one colour") unless subset.is_a?(Array) && subset.any?
 
         subset.each { |index| check_index(:subset, index) }
-      end
-
-      # i < p, and not negative. A rule naming a colour the palette does not
-      # have is the same mistake as a colorway whose palette cannot fill the
-      # pattern, caught in the same place.
-      def check_index(attribute, index)
-        return if index.is_a?(Integer) && index.between?(0, size - 1)
-
-        errors.add(attribute, "has to name one of the palette's #{size} colours")
       end
   end
 end
