@@ -74,7 +74,29 @@ module Stripeclub
       assert_response :success
       assert_select "svg pattern rect", 3
       assert_select "table.repeat tbody tr", 3
-      assert_select "dl.pairs"
+      assert_select "dl.pairs dd", text: "3 equal stripes", count: 1
+      assert_select "table.repeat th", { text: "Width", count: 0 }, "three stripes at 33.3% is one fact, not three figures"
+    end
+
+    # The page's four surfaces, named under the title; the one shown in the
+    # weight, and shown alone. The drawing and what is true of it are on every one.
+    test "the pattern page is four surfaces, reached from the head" do
+      pattern = Pattern.create!(name: "Surfaced", slot_count: 2)
+
+      get pattern_path(pattern)
+      assert_equal %w[ Compose Finish Dress Export ], css_select("header.page-head nav.sections a").map(&:text)
+      assert_select "nav.sections a[aria-current=page]", text: "Compose"
+      assert_select "section.repeat"
+      assert_select "section.tiling", 0
+
+      get pattern_path(pattern, section: "finish")
+      assert_select "nav.sections a[aria-current=page]", text: "Finish"
+      assert_select "section.tiling"
+      assert_select "section.repeat", 0
+      assert_select ".preview-column svg", 1, "the drawing stays on every surface"
+
+      get pattern_path(pattern, section: "nonsense")
+      assert_select "nav.sections a[aria-current=page]", text: "Compose"
     end
 
     test "showing a pattern lists its slots, ranked from the ground" do
@@ -105,18 +127,18 @@ module Stripeclub
       colorway = colorway_for("Ruled", %w[ #FAF8F4 #808080 #12120F ])
       colorway.bind(colorway.pattern.values.second, kind: :assigned_slot, slot: 0)
 
-      get pattern_path(colorway.pattern)
+      get pattern_path(colorway.pattern, section: "dress")
 
       assert_select "section.colorways .slot-swatch--ruled", 1
+      assert_select "section.colorways tbody tr", 1, "a slot bound to its rank is the rule, and is not listed"
       assert_select "section.colorways tbody tr", text: /Palette colour 0/
-      assert_select "section.colorways tbody tr", text: /By rank/
     end
 
     test "an invalidated colorway is shown as kept rather than drawn" do
       colorway = colorway_for("Outgrown", %w[ #FAF8F4 #12120F ])
       colorway.pattern.add_value!
 
-      get pattern_path(colorway.pattern)
+      get pattern_path(colorway.pattern, section: "dress")
 
       assert_select "section.colorways", text: /Invalid/
       assert_select "section.colorways svg", 0
@@ -129,7 +151,7 @@ module Stripeclub
     test "showing a pattern reports its tiling for every output mode" do
       pattern = Pattern.create!(name: "Angled", slot_count: 2, angle: 30)
 
-      get pattern_path(pattern)
+      get pattern_path(pattern, section: "finish")
 
       assert_select "table.tiling__modes tbody tr", Tiling::MODES.size
       assert_select "table.tiling__modes tbody tr.tiling--refused td", text: "Doesn't tile"
@@ -139,7 +161,7 @@ module Stripeclub
     test "a pattern that already closes is offered no snap" do
       pattern = Pattern.create!(name: "Fitted", slot_count: 2, angle: 45)
 
-      get pattern_path(pattern)
+      get pattern_path(pattern, section: "finish")
 
       assert_select "tr.tiling--refused", 0
       assert_select "form[action=?]", pattern_tiling_path(pattern), 0
@@ -150,7 +172,7 @@ module Stripeclub
 
       patch pattern_tiling_path(pattern)
 
-      assert_redirected_to pattern_path(pattern)
+      assert_redirected_to pattern_path(pattern, section: "finish")
       assert_in_delta 26.565, pattern.reload.angle.to_f, 0.001
       assert_predicate Tiling.new(pattern, mode: :unbroken), :seamless?
     end
@@ -296,6 +318,8 @@ module Stripeclub
 
       assert_select "section.rows tbody tr", 3
       assert_select "svg defs pattern", 4
+
+      get pattern_path(pattern, section: "finish")
       assert_select "table.tiling__modes tbody tr", text: /Tiles, with rows/
     end
 
@@ -314,7 +338,7 @@ module Stripeclub
     test "a pattern offers its tile in both forms and its colorway in both" do
       colorway = colorway_for("Exported", %w[ #FAF8F4 #12120F ])
 
-      get pattern_path(colorway.pattern)
+      get pattern_path(colorway.pattern, section: "export")
 
       assert_select "section.export a[href=?]", pattern_tile_path(colorway.pattern, format: :svg)
       assert_select "section.export a[href*=?]", "format=png", false
@@ -331,7 +355,7 @@ module Stripeclub
         imperfection: { wobble: 0.08, variance: 0.3, texture: 0.2, seed: 11 }
       }
 
-      assert_redirected_to pattern_path(pattern)
+      assert_redirected_to pattern_path(pattern, section: "finish")
       assert_predicate pattern.reload.imperfection, :any?
       assert_not_equal clean, pattern.drawn_widths
 
@@ -356,7 +380,7 @@ module Stripeclub
 
       patch pattern_imperfection_path(pattern), params: { imperfection: { variance: 2 } }
 
-      assert_redirected_to pattern_path(pattern)
+      assert_redirected_to pattern_path(pattern, section: "finish")
       assert_nil pattern.reload.imperfection
     end
 

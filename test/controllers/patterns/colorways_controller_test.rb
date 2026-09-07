@@ -49,7 +49,7 @@ module Stripeclub
 
         colorway = @pattern.colorways.sole
 
-        assert_redirected_to pattern_path(@pattern)
+        assert_redirected_to pattern_path(@pattern, section: "dress")
         assert_equal 2, colorway.palette_id
         assert_equal "Deck Chair", colorway.snapshot.palette_name
 

@@ -27,7 +27,7 @@ module Stripeclub
 
       colorway = @pattern.colorways.create!(palette: palette)
 
-      redirect_to @pattern, notice: "#{@pattern.name} dressed in #{colorway.snapshot.palette_name}."
+      redirect_to dress, notice: "#{@pattern.name} dressed in #{colorway.snapshot.palette_name}."
     rescue ActiveRecord::RecordInvalid => e
       redirect_to new_pattern_colorway_path(@pattern), alert: e.record.errors.full_messages.to_sentence
     rescue Pandatone::Dresser::Error => e
@@ -37,18 +37,23 @@ module Stripeclub
     def destroy
       @colorway.destroy!
 
-      redirect_to @pattern, notice: "Colorway taken off. The pattern is undressed, not changed."
+      redirect_to dress, notice: "Colorway taken off. The pattern is undressed, not changed."
     end
 
     # Reported, never applied. A design that was finished should not change
     # because someone else opened another tool.
     def drift
-      redirect_to @pattern, notice: drift_report(@colorway)
+      redirect_to dress, notice: drift_report(@colorway)
     rescue Pandatone::Dresser::Error => e
-      redirect_to @pattern, alert: e.message
+      redirect_to dress, alert: e.message
     end
 
     private
+      # Back to the surface the colorways live on.
+      def dress
+        pattern_path(@pattern, section: "dress")
+      end
+
       def set_pattern
         @pattern = Pattern.find(params[:pattern_id])
       end

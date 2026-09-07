@@ -3,6 +3,28 @@
 Semver. The API is versioned separately, under its own path, and is not
 what this file numbers.
 
+## 0.3.0 — 2026-09-07
+
+A day of use. On its-swiss 0.9 and Pandatone 0.3.
+
+### Changed
+
+- **The pattern page is four surfaces.** Compose, Finish, Dress and Export,
+  named under the title; the drawing and what is true of it stay in the
+  left column, and stay put, while the surface beside them is worked.
+  Nothing is reached by scrolling past what was done yesterday: the slots'
+  buttons are with the slots, the exports are a surface, and taking the
+  pattern away is in the head with renaming it.
+
+- **Each thing said once.** Four stripes at 25.00% is one fact: a repeat of
+  equal stripes says so in a word and shows no width column. A slot bound
+  to its rank is the rule, so a colorway lists only the slots bound to
+  something else, or says every slot is by rank. The sentence over every
+  table is behind one mark, opened when it is asked for.
+
+- **One red per page.** The chosen filter is in the weight, in ink; the
+  accent is the host's, for where you are on the site.
+
 ## 0.2.0 — 2026-09-07
 
 ### Changed

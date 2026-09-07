@@ -1,0 +1,35 @@
+<%# locals: (pattern:) %>
+<%# How the pattern leaves: one tile, in value and in each colorway. %>
+<section class="export stack">
+  <% tile = Stripeclub::Tile.new(Stripeclub::ValueScale.new(pattern), period: Stripeclub::SvgPattern::PERIOD) %>
+  <p>One tile, <%= tile.width.round(2) %> × <%= tile.height.round(2) %> units, for whatever is going to repeat it.</p>
+  <%= explain "Free to choose its own size, a tile always closes. The constraint only bites when the " \
+        "size is fixed, which is what Snap under Finish is for. The reference form is the tile with " \
+        "its construction drawn in; a PNG is the tile at four pixels a unit and carries the geometry " \
+        "and not the filters." %>
+
+  <table class="table">
+    <thead>
+      <tr><th scope="col">Drawing</th><th scope="col">Files</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>In value</td>
+        <td class="run">
+          <%= link_to "SVG", pattern_tile_path(pattern, format: :svg), class: "link-quiet" %>
+          <%= link_to "PNG", pattern_tile_path(pattern, format: :png, scale: 4), class: "link-quiet" %>
+          <%= link_to "Reference form", pattern_tile_path(pattern, format: :svg, form: "reference"), class: "link-quiet" %>
+        </td>
+      </tr>
+      <% pattern.colorways.reject(&:invalidated?).each do |colorway| %>
+        <tr>
+          <td>Wearing <%= colorway.snapshot.palette_name %></td>
+          <td class="run">
+            <%= link_to "SVG", pattern_tile_path(pattern, format: :svg, colorway: colorway.id), class: "link-quiet" %>
+            <%= link_to "PNG", pattern_tile_path(pattern, format: :png, colorway: colorway.id, scale: 4), class: "link-quiet" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

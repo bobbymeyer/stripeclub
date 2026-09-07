@@ -50,6 +50,32 @@ module Stripeclub
       value.position.zero? ? "Ground" : "Slot #{value.position}"
     end
 
+    # Four stripes at 25.00% is one fact, not four figures: a repeat of equal
+    # stripes is said in a word and its width column left out. Unequal widths
+    # are said as they are, to the tenth, with no trailing zeros.
+    def equal_widths?(pattern)
+      # Even widths are stored to six places and the last takes the rounding,
+      # so a third is 0.333333 twice and 0.333334 once: equal to the tenth
+      # of a percent the page would show, which is what is being asked.
+      pattern.sequence.stripes.map { |stripe| stripe.width.round(3) }.uniq.size <= 1
+    end
+
+    def repeat_in_words(pattern)
+      count = pattern.sequence.stripes.size
+      equal_widths?(pattern) ? "#{pluralize count, "equal stripe"}" : "#{pluralize count, "stripe"}, summing to one"
+    end
+
+    def width_in_words(stripe)
+      number_to_percentage(stripe.width * 100, precision: 1, strip_insignificant_zeros: true)
+    end
+
+    # How many stripes of the repeat draw a slot; none is what "+" leaves
+    # behind, and is said rather than left blank.
+    def drawn_by_in_words(pattern, value)
+      count = pattern.sequence.stripes.count { |stripe| stripe.value_id == value.id }
+      count.zero? ? "Nothing yet — drawn by nothing" : pluralize(count, "stripe")
+    end
+
     # Which parts of the structure are still doing value work.
     #
     # A value bound to its rank shows the step of the ladder it sits on,

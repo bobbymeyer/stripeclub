@@ -7,9 +7,9 @@ module Stripeclub
 
       if snap.changed?
         snap.apply!
-        redirect_to pattern, notice: "Snapped to #{pattern.angle.to_f.round(3)}°, a slope of #{snap.slope_as_ratio}."
+        redirect_to pattern_path(pattern, section: "finish"), notice: "Snapped to #{pattern.angle.to_f.round(3)}°, a slope of #{snap.slope_as_ratio}."
       else
-        redirect_to pattern, notice: "#{pattern.name} already closes on an unbroken tile."
+        redirect_to pattern_path(pattern, section: "finish"), notice: "#{pattern.name} already closes on an unbroken tile."
       end
     end
   end
