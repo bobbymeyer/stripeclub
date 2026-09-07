@@ -1,39 +1,40 @@
-<% content_for :title, "Patterns" %>
-<% content_for :main_class, "grid" %>
-
-<header class="page-head run">
-  <h1>Patterns</h1>
+<%= page_head "Patterns", lede: "Structure, drawn in value: how many slots, how wide each stripe, at what angle. None of these has been given a palette." do %>
   <%= link_to "Compose a pattern", new_pattern_path, class: "button button--primary" %>
-</header>
+<% end %>
 
-<% if @patterns.any? %>
-  <table class="table patterns">
-    <caption>Every pattern, by name. Drawn in value: none of these has been given a palette.</caption>
-    <thead>
-      <tr>
-        <th scope="col">Pattern</th>
-        <th scope="col">Repeat</th>
-        <th scope="col" class="numeric">Slots</th>
-        <th scope="col">Angle</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @patterns.each do |pattern| %>
-        <tr>
-          <td><%= link_to pattern.name, pattern %></td>
-          <td><%= pattern_preview pattern, size: 96, period: 24, class: "preview--inline" %></td>
-          <td class="numeric"><%= pattern.slot_count %></td>
-          <td><%= angle_in_words(pattern) %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+<%# The library's filter block: a search that narrows as you type, into the
+    frame below, and two registers of one-of-a-handful. Each carries the
+    others, so choosing one does not drop the rest. %>
+<div class="filters">
+  <%= search_form patterns_path, frame: "patterns", keep: { lean: @lean, sort: @sort } %>
 
-  <%= render "stripeclub/shared/pagination",
-        page: @page, pages: @pages, url: ->(number) { patterns_path(page: number) } %>
-<% else %>
-  <p class="empty">
-    No patterns yet. A pattern is structure — how many slots, how wide each stripe,
-    in what order, at what angle — and carries no colour at all.
-  </p>
+  <%= filter_register "Leaning",
+        [ [ "All", patterns_path(q: params[:q], sort: @sort), @lean.nil? ],
+          *Stripeclub::Pattern::LEANS.map { |key, label| [ label, patterns_path(lean: key, q: params[:q], sort: @sort), @lean == key ] } ],
+        name: "lean" %>
+
+  <%= filter_register "Sort by",
+        Stripeclub::Pattern::SORTS.map { |key, label| [ label, patterns_path(sort: key, q: params[:q], lean: @lean), @sort == key ] },
+        name: "sort" %>
+</div>
+
+<%# Only the results live in the frame; the form stays outside it so typing
+    does not replace the field under the cursor. _top, because a card inside
+    is going somewhere else entirely. %>
+<%= turbo_frame_tag "patterns", data: { turbo_action: "replace" }, target: "_top" do %>
+  <% if @patterns.any? %>
+    <ul class="grid cards pattern-cards">
+      <%= render partial: "stripeclub/patterns/card", collection: @patterns, as: :pattern %>
+    </ul>
+
+    <%= render "its_swiss/shared/pagination",
+          page: @page, pages: @pages, url: ->(number) { patterns_path(page: number, q: params[:q], lean: @lean, sort: @sort) } %>
+  <% elsif @total.zero? %>
+    <p class="empty">
+      No patterns yet. A pattern is structure — how many slots, how wide each stripe,
+      in what order, at what angle — and carries no colour at all.
+    </p>
+  <% else %>
+    <p class="empty">No patterns match.</p>
+  <% end %>
 <% end %>

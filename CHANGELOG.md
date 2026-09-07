@@ -3,7 +3,38 @@
 Semver. The API is versioned separately, under its own path, and is not
 what this file numbers.
 
-## 0.1.0 — 2026-09-05
+## 0.2.0 — 2026-09-07
+
+### Changed
+
+- **Dressed by Pandatone's dresser.** The catalogue, the client, the
+  palette and colour readers, the luminance measure, the snapshot, the
+  picker, the swatches and the drift sentences were this engine's copies
+  of a pattern Badger had copied too; they are `Pandatone::Dresser` now,
+  and this engine keeps what is a stripe pattern's own: the rule per
+  value with its two repeat-varying kinds, and what a stripe resolves to.
+  `Stripeclub.palette_source`, `pandatone_url` and `pandatone_token` are
+  gone: with no `PANDATONE_URL` the dresser asks the Pandatone in the same
+  process, and with one it asks that Pandatone over HTTP. The gemspec
+  depends on `pandatone`.
+- **Set on its-swiss 0.8.** Every page opens with the library's page head.
+  The index is cards on the page's own fields — the tile in value over the
+  name and its two numbers — narrowed by a search that filters as you type
+  and by two registers, which way the stripes lean and the order. The grid
+  is set once, in the layout, for every page. The library's pagination
+  partial is used as shipped: the copy that dodged an ERB comment bug it
+  fixed in 0.7 is gone, and so is the numeric-cell correction 0.7 made
+  unnecessary.
+- A colorway's rule reads "Palette colour n" where it read "Palette slot
+  n", and a colorway is taken off rather than removed. "Take off" is the
+  dresser's word, on every tool.
+
+### Removed
+
+- `--baseline`, which nothing measured on; the dead footer and row-form
+  rules; the pagination partial; the palette picker partial.
+
+
 
 Stripeclub becomes a Rails engine. Everything that knows what a stripe is
 comes along; everything that does not stays behind.

@@ -5,11 +5,14 @@ boundary was drawn from one application, and the changelog says so — `.table`
 and `.pagination` shipped with **no consumer at all**, and `.footer` with a
 slot nothing filled.
 
-This file is what the second consumer found. Nothing here has been changed in
-the gem: a pattern enters it after it appears in two applications, and one of
-those is still Pandatone's to confirm.
+This file is what the second consumer found, as it found it. Since then the
+gem has taken most of it: 1 and 2 were fixed in 0.7, 3 and 4 are how the shell
+and the layout work now, and 0.8 promoted the page head, the filter block and
+the card list once a third consumer had drawn them too. Stripeclub's
+workarounds for 1 and 2 are gone. Each entry is kept as written, because the
+finding is the record; where it names a file, the paths are today's.
 
-Each entry says what happened, where Stripeclub works around it, and what the
+Each entry says what happened, where Stripeclub worked around it, and what the
 gem might do instead.
 
 ---
@@ -31,7 +34,7 @@ Both of Stripeclub's tables have a numeric column that is not last. The index
 rendered its headings as `SlotsAngle`; the repeat table rendered `#Draws` and
 `1Ground`.
 
-Worked around in `app/assets/stylesheets/stripeclub.css`:
+Worked around, until 0.7.2 fixed it, in `app/assets/stylesheets/stripeclub/components.css`:
 
 ```css
 .table .numeric:not(:last-child) { padding-inline-end: var(--space-3); }
@@ -77,7 +80,7 @@ shipped. Stripeclub's version is in `test/integration/layout_test.rb`, and it
 caught the same mistake in the file written to work around it, on its first
 run.
 
-Worked around by `app/views/shared/_pagination.html.erb` — the library's
+Worked around, until 0.7.2 fixed it, by a copy of the partial under `app/views/stripeclub/shared/` — the library's
 markup, copied verbatim, with only the comment changed. It is a file that
 exists to be deleted.
 

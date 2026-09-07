@@ -20,22 +20,6 @@ module Stripeclub
   mattr_accessor :base_controller_class, default: "::ApplicationController"
   mattr_accessor :api_base_controller_class, default: "::ApiController"
 
-  # Where Pandatone is and what to show it at the door, for the HTTP client
-  # the engine uses when nobody has said otherwise. Neither is required to
-  # boot: Stripeclub composes patterns without a palette in sight, and only
-  # choosing one needs Pandatone at all.
-  mattr_accessor :pandatone_url, default: ENV["PANDATONE_URL"].presence
-  mattr_accessor :pandatone_token, default: ENV["PANDATONE_TOKEN"].presence
-
-  # Where palettes come from: anything that answers `call` with an array of
-  # palettes in Pandatone's wire format — id, name, tags, and colors each
-  # with id, name, hex and rgb. The default fetches them over HTTP from the
-  # Pandatone above. A host that has Pandatone in the same process hands
-  # over a lambda that asks it directly, and Stripeclub never learns the
-  # difference — which is the point: it knows Pandatone by its wire format
-  # and by nothing else.
-  mattr_accessor :palette_source, default: -> { Stripeclub::Pandatone::Client.configured.palettes_json }
-
   class << self
     def patterns
       PatternSerializer.many(Pattern.order(:name))

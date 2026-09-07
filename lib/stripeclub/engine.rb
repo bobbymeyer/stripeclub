@@ -7,6 +7,7 @@ require "importmap-rails"
 require "turbo-rails"
 require "stimulus-rails"
 require "its-swiss"
+require "pandatone"
 require "chunky_png"
 
 module Stripeclub
@@ -15,13 +16,12 @@ module Stripeclub
   #
   #   mount Stripeclub::Engine, at: "/stripeclub"
   #
-  # Three things it takes from the host. The door: every screen inherits from
+  # Two things it takes from the host. The door: every screen inherits from
   # the host's ApplicationController and every API endpoint from the host's
   # API controller (Stripeclub.base_controller_class). The shell: the engine's
   # layout fills its slots and renders the host's layouts/application around
-  # them. And the palettes: Stripeclub dresses a pattern in a palette it did
-  # not make, and where those come from is the host's to say
-  # (Stripeclub.palette_source).
+  # them. The palettes it takes from Pandatone, through Pandatone's own
+  # dresser: the Pandatone in the same process, or one at PANDATONE_URL.
   class Engine < ::Rails::Engine
     isolate_namespace Stripeclub
 

@@ -4,6 +4,12 @@ source "https://rubygems.org"
 # dummy application under test/ needs to run it.
 gemspec
 
+# its-swiss 0.8 and pandatone 0.2 are not released yet; until they are, the
+# engine develops against the branches that carry them. Delete these lines
+# when they are.
+gem "its-swiss", github: "bobbymeyer/its-swiss", branch: "page-head-and-indexes"
+gem "pandatone", github: "bobbymeyer/pandatone", branch: "claude/ui-alignment"
+
 gem "puma"
 gem "sqlite3", ">= 2.1"
 

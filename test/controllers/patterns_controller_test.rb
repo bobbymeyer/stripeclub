@@ -2,33 +2,52 @@ require "test_helper"
 
 module Stripeclub
   class PatternsControllerTest < ActionDispatch::IntegrationTest
-    test "the index lists patterns and draws each one" do
+    test "the index draws each pattern on a card, in value" do
       Pattern.create!(name: "Awning", slot_count: 2)
       Pattern.create!(name: "Ticking", slot_count: 4)
 
       get patterns_path
 
       assert_response :success
-      assert_select "table.table tbody tr", 2
-      assert_select "svg", 2
+      assert_select "header.page-head h1.page-title", text: "Patterns"
+      assert_select "ul.cards > li.pattern-card", 2
+      assert_select ".pattern-card .card__figure svg", 2
       assert_select "svg pattern rect", 6
+      assert_select ".pattern-card .card__meta", text: "4 slots · Vertical"
     end
 
-    # .table and .pagination are the two components its-swiss shipped with no
-    # consumer at all — the changelog says so and names them as the ones most
-    # likely to move when Stripeclub lands. This is the page that consumes them.
+    # The library's filter block: a search that narrows as you type, into the
+    # frame the cards are in, and a register for the lean and the order.
+    test "the index narrows by name and by lean, and keeps the order it is read in" do
+      Pattern.create!(name: "Awning", slot_count: 2, angle: 90)
+      Pattern.create!(name: "Bias", slot_count: 3, angle: 30)
+      Pattern.create!(name: "Cabana", slot_count: 3, angle: 0)
+
+      get patterns_path(q: "a", lean: "bias", sort: "slots")
+
+      assert_select ".filters form[data-controller='its-swiss-live-search'][data-turbo-frame=patterns]"
+      assert_select ".filters form input[type=hidden][name=lean][value=bias]"
+      assert_select "[data-filter=lean] a[aria-current]", text: "On the bias"
+      assert_select "[data-filter=sort] a[aria-current]", text: "Most slots"
+      assert_select "turbo-frame#patterns .pattern-card", 1
+      assert_select ".pattern-card .card__name", text: "Bias"
+
+      get patterns_path(q: "zzz")
+      assert_select ".empty", text: "No patterns match."
+    end
+
     test "the index paginates once there are more patterns than fit" do
       (PatternsController::PER_PAGE + 2).times { |n| Pattern.create!(name: "Pattern #{n}", slot_count: 2) }
 
       get patterns_path
 
-      assert_select "table.table tbody tr", PatternsController::PER_PAGE
+      assert_select "ul.cards > li", PatternsController::PER_PAGE
       assert_select "nav.pagination"
       assert_select "nav.pagination [aria-current=page]", text: "1"
 
       get patterns_path(page: 2)
 
-      assert_select "table.table tbody tr", 2
+      assert_select "ul.cards > li", 2
     end
 
     test "a page past the end is brought back to the last one" do
@@ -37,14 +56,14 @@ module Stripeclub
       get patterns_path(page: 99)
 
       assert_response :success
-      assert_select "table.table tbody tr", 1
+      assert_select "ul.cards > li", 1
     end
 
-    test "an empty index says so rather than showing an empty table" do
+    test "an empty index says so rather than showing an empty list" do
       get patterns_path
 
-      assert_select ".empty"
-      assert_select "table.table", 0
+      assert_select ".empty", text: /No patterns yet/
+      assert_select "ul.cards", 0
     end
 
     test "showing a pattern draws it and lists its repeat" do
@@ -89,7 +108,7 @@ module Stripeclub
       get pattern_path(colorway.pattern)
 
       assert_select "section.colorways .slot-swatch--ruled", 1
-      assert_select "section.colorways tbody tr", text: /Palette slot 0/
+      assert_select "section.colorways tbody tr", text: /Palette colour 0/
       assert_select "section.colorways tbody tr", text: /By rank/
     end
 
@@ -360,12 +379,12 @@ module Stripeclub
         pattern = Pattern.create!(name: name, slot_count: hexes.size)
 
         colors = hexes.each_with_index.map do |hex, index|
-          Pandatone::Color.new(id: index, name: "Colour #{index}", hex: hex,
+          Pandatone::Dresser::Color.new(id: index, name: "Colour #{index}", hex: hex,
             red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16))
         end
 
         Colorway.create!(pattern: pattern,
-          palette: Pandatone::Palette.new(id: 1, name: "Seeded", colors: colors))
+          palette: Pandatone::Dresser::Palette.new(id: 1, name: "Seeded", colors: colors))
       end
   end
 end

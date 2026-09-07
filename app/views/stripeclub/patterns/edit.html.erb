@@ -1,7 +1,5 @@
 <% content_for :title, @pattern.name %>
 
-<header class="page-head">
-  <h1>Rename <%= @pattern.name %></h1>
-</header>
+<%= page_head "Rename #{@pattern.name}" %>
 
 <%= render "form", pattern: @pattern, submit_label: "Save", cancel_to: pattern_path(@pattern) %>

@@ -33,8 +33,7 @@ module ActiveSupport
       pattern.sequence.tap { |sequence| sequence.stripes.reload }
     end
 
-    # Pandatone, configured and answering over HTTP — the engine's default
-    # palette source.
+    # Pandatone somewhere else, configured and answering over HTTP.
     #
     # Stubbed at the wire rather than below it: what is worth testing about
     # reaching another tool is the request as it goes out and the shape that
@@ -46,16 +45,16 @@ module ActiveSupport
 
       palettes.each { |(id, name), hexes| stub_palette(url, id, name, hexes) }
 
-      was = [ Stripeclub.pandatone_url, Stripeclub.pandatone_token, Stripeclub.palette_source ]
-      Stripeclub.pandatone_url = url
-      Stripeclub.pandatone_token = token
-      Stripeclub.palette_source = -> { Stripeclub::Pandatone::Client.configured.palettes_json }
-      Stripeclub::Pandatone::Catalog.forget!
+      was = [ Pandatone::Dresser.url, Pandatone::Dresser.token, Pandatone::Dresser.source ]
+      Pandatone::Dresser.url = url
+      Pandatone::Dresser.token = token
+      Pandatone::Dresser.source = -> { Pandatone::Dresser::Client.configured.palettes_json }
+      Pandatone::Dresser::Catalog.forget!
 
       yield
     ensure
-      Stripeclub.pandatone_url, Stripeclub.pandatone_token, Stripeclub.palette_source = was
-      Stripeclub::Pandatone::Catalog.forget!
+      Pandatone::Dresser.url, Pandatone::Dresser.token, Pandatone::Dresser.source = was
+      Pandatone::Dresser::Catalog.forget!
     end
 
     def stub_palette(url, id, name, hexes)
@@ -75,13 +74,13 @@ module ActiveSupport
     # the hex is the only part of a colour these tests are ever about.
     def pandatone_palette(*hexes, id: 7, name: "Sample")
       colors = hexes.each_with_index.map do |hex, index|
-        Stripeclub::Pandatone::Color.new(
+        Pandatone::Dresser::Color.new(
           id: (id * 100) + index, name: "Colour #{index}", hex: hex,
           red: hex[1..2].to_i(16), green: hex[3..4].to_i(16), blue: hex[5..6].to_i(16)
         )
       end
 
-      Stripeclub::Pandatone::Palette.new(id: id, name: name, colors: colors)
+      Pandatone::Dresser::Palette.new(id: id, name: name, colors: colors)
     end
   end
 end

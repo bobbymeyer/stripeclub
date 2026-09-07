@@ -49,22 +49,13 @@ module Stripeclub
 
     # Which parts of the structure are still doing value work.
     #
-    # A value bound to its rank shows the step of the ladder it sits on, because
-    # that step is what decides its colour. A value bound to a rule shows a
-    # hatch instead: its rank has stopped mattering, and a swatch that went on
-    # showing one would be showing something the colorway no longer reads.
-    #
-    # The hatch is never the only thing saying so — every place this is used
-    # names the rule in words beside it — because a pattern in a small square is
-    # exactly the kind of signal some readers do not get.
-    def slot_swatch(value, colorway: nil)
+    # A value bound to its rank shows the step of the ladder it sits on,
+    # because that step is what decides its colour. A value bound to a rule
+    # shows the dresser's hatch instead: its rank has stopped mattering.
+    def value_swatch(value, colorway: nil)
       rule = colorway&.rule_for(value)
 
-      if rule.nil? || rule.binds_to_rank?
-        tag.span(class: "slot-swatch", style: "background: #{ValueScale.new(value.pattern).gray_for(value).hex}")
-      else
-        tag.span(class: "slot-swatch slot-swatch--ruled")
-      end
+      slot_swatch(ValueScale.new(value.pattern).gray_for(value).hex, ruled: !(rule.nil? || rule.binds_to_rank?))
     end
 
     # A slot nothing draws is what "+" leaves behind: a rank that exists and is
@@ -104,35 +95,15 @@ module Stripeclub
       end
     end
 
-    # A palette as the picker shows it: its colours in luminance rank, drawn as
-    # the grays of their own lightness.
-    #
-    # Not in their own colours, and that is the handoff's call rather than a
-    # shortcut. The preview is the one place colour belongs, and what a palette
-    # is *for* here is its distribution of value — which is the thing you cannot
-    # see when six hues are shouting. Choose on the ladder, then look at the
-    # preview.
-    def palette_strip(palette)
-      tag.ol(class: "palette-strip") do
-        safe_join(palette.ranked.map { |color| palette_swatch(color) })
-      end
-    end
-
-    def palette_swatch(color)
-      tag.li do
-        safe_join([
-          tag.span(class: "palette-swatch", style: "background: #{Luminance.gray(color.luminance)}"),
-          tag.span(color.name, class: "palette-swatch__name")
-        ])
-      end
-    end
-
+    # The dresser says the two kinds every consumer has; these two are a
+    # stripe pattern's own.
     def rule_name(rule)
-      {
-        "auto_value_match" => "By rank", "assigned_slot" => "Palette slot #{rule.slot}",
-        "increment" => "Increment from #{rule.start} by #{rule.step}",
-        "random" => "Random of #{rule.subset.to_a.size}, seeded"
-      }.fetch(rule.kind)
+      rule_in_words(rule) do
+        case rule.kind
+        when "increment" then "Increment from #{rule.start} by #{rule.step}"
+        when "random" then "Random of #{rule.subset.to_a.size}, seeded"
+        end
+      end
     end
   end
 end

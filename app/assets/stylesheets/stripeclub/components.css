@@ -21,10 +21,20 @@
   height: auto;
 }
 
-/* In a table cell the preview is a sample, not a subject: small, fixed, and
-   sitting on the row's baseline rather than setting the row's height. */
+/* Beside a colorway's table the preview is a sample, not a subject: small
+   and fixed. */
 .preview--inline {
   width: 6rem;
+}
+
+/* On a card the tile fills the figure the library has measured to whole
+   lines; the hairline is the figure's edge. */
+.pattern-card .preview {
+  height: 100%;
+}
+
+.pattern-card .preview svg {
+  height: 100%;
 }
 
 .preview-figure {
@@ -36,57 +46,6 @@
   color: var(--ink-quiet);
   font-size: var(--size-1);
   max-width: var(--measure);
-}
-
-/* --- Corrections to the library ----------------------------------------
-   Kept together and named, because each is a candidate for its-swiss rather
-   than something Stripeclub wanted. See ITS-SWISS-CANDIDATES.md. */
-
-/* its-swiss writes `.table .numeric { padding-inline: var(--space-3) 0 }`,
-   which zeroes the end padding of every numeric cell and not only the last
-   one. That is right for a figure in the final column and wrong anywhere
-   else: the next column's text starts exactly where the number ends, and
-   "Slots" and "Angle" rendered as one word. The library's own :last-child
-   rule still zeroes the column that really is last. */
-.table .numeric:not(:last-child) { padding-inline-end: var(--space-3); }
-
-/* --- Page furniture ---------------------------------------------------- */
-.page-head {
-  justify-content: space-between;
-  align-items: baseline;
-  padding-block-end: var(--space-3);
-}
-
-.page-head h1 {
-  margin: 0;
-}
-
-/* The patterns table carries a drawing in one of its columns, so that column
-   is sized and the rest take what is left.
-
-   Baseline alignment is right for a table of text and wrong for this one: the
-   drawing is six lines tall, and a name aligned to its baseline sits at the
-   foot of the row instead of beside the thing it names. That is the
-   application's business — a library cannot know a cell holds a picture. */
-.patterns td { vertical-align: middle; }
-
-.patterns td:nth-child(2),
-.patterns th:nth-child(2) { width: 7rem; }
-
-.patterns td:nth-child(3),
-.patterns th:nth-child(3) { width: 4rem; }
-
-.patterns td:nth-child(4),
-.patterns th:nth-child(4) { width: 8rem; }
-
-.footer__note {
-  color: var(--ink-quiet);
-  font-size: var(--size-1);
-  max-width: var(--measure);
-}
-
-.footer__tool {
-  color: var(--ink);
 }
 
 /* The stripe number is an ordinal, not a measurement: it wants to be narrow
@@ -112,30 +71,9 @@
   margin-inline-end: var(--space-1);
 }
 
-/* --- Slots -------------------------------------------------------------
-   A slot bound to its rank shows the step of the ladder it sits on. A slot
-   bound to a rule is hatched, because its rank has stopped deciding anything
-   and a swatch still showing one would be showing something the colorway no
-   longer reads.
-
-   Never the only signal: every table using these names the rule in the column
-   beside it. */
-.slot-swatch {
-  display: inline-block;
-  width: var(--space-3);
-  height: var(--space-3);
-  border: var(--rule-hair) solid var(--rule-strong);
-  vertical-align: baseline;
-  margin-inline-end: var(--space-1);
-}
-
-.slot-swatch--ruled {
-  background: var(--paper);
-  background-image: repeating-linear-gradient(
-    45deg, var(--ink-quiet) 0 1px, transparent 1px 4px
-  );
-}
-
+/* --- Colorways -----------------------------------------------------------
+   The slot swatches and the picker are Pandatone's dresser's, in its own
+   stylesheet; what is here is how a colorway sits on the pattern's page. */
 .colorway h2 {
   font-size: var(--size-2);
   margin-block-end: var(--space-2);
@@ -143,11 +81,7 @@
 
 /* --- Rows --------------------------------------------------------------
    A row's four transforms are four small numbers on one line, so the fields
-   are sized to the numbers rather than to the column. its-swiss's .form is
-   built for a stack of labelled fields; inside a table cell it is one control
-   and nothing else, which is what .form--inline is for. */
-.row-form .field { margin: 0; }
-
+   are sized to the numbers rather than to the column. */
 .rows input[type="number"] {
   width: 4.5rem;
 }
@@ -175,44 +109,4 @@
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: var(--space-3);
   padding-block-end: var(--space-3);
-}
-
-/* --- The palette picker ------------------------------------------------
-   A palette's colours in luminance rank, drawn as the grays of their own
-   lightness. Colour belongs in the preview; what a palette is for here is the
-   spread of its values, and hues hide that. */
-.palette-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.palette-strip li {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  align-items: center;
-}
-
-.palette-swatch {
-  display: block;
-  width: var(--space-4);
-  height: var(--space-4);
-  border: var(--rule-hair) solid var(--rule-strong);
-}
-
-.palette-swatch__name {
-  font-size: var(--size-0, 0.75rem);
-  color: var(--ink-quiet);
-  max-width: 6rem;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.palettes h2 {
-  font-size: var(--size-2);
-  margin-block: var(--space-4) var(--space-1);
 }

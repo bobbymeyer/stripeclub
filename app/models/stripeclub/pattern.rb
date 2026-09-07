@@ -21,6 +21,29 @@ module Stripeclub
     has_many :values, -> { order(:position) }, dependent: :destroy, inverse_of: :pattern
 
     validates :name, presence: true
+
+    # What the index narrows by. A name, as typed; the two axes and everything
+    # between them; and the orders the sort register offers.
+    scope :name_matching, ->(q) { q.present? ? where("LOWER(#{table_name}.name) LIKE ?", "%#{sanitize_sql_like(q.to_s.downcase)}%") : all }
+    scope :leaning, ->(lean) {
+      case lean.to_s
+      when "horizontal" then where(angle: 0)
+      when "vertical" then where(angle: 90)
+      when "bias" then where.not(angle: [ 0, 90 ])
+      else all
+      end
+    }
+
+    SORTS = { "name" => "Name", "newest" => "Newest", "slots" => "Most slots" }.freeze
+    LEANS = { "horizontal" => "Horizontal", "vertical" => "Vertical", "bias" => "On the bias" }.freeze
+
+    scope :sorted, ->(key) {
+      case key.to_s
+      when "newest" then order(created_at: :desc, name: :asc)
+      when "slots" then order(slot_count: :desc, name: :asc)
+      else order(:name)
+      end
+    }
     validates :slot_count, numericality: { only_integer: true, greater_than_or_equal_to: 1 }
     validates :angle, presence: true
     validates :row_depth, numericality: { greater_than: 0 }

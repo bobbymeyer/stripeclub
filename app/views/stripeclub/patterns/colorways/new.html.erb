@@ -1,34 +1,12 @@
-<% content_for :title, "Dress #{@pattern.name}" %>
-
-<header class="page-head run">
-  <h1>Dress <%= @pattern.name %></h1>
+<%= page_head "Dress #{@pattern.name}",
+      lede: "#{pluralize(@pattern.slot_count, "slot")}, ranked from the ground. A palette with at least that many colours can dress it." do %>
   <%= link_to "Back to the pattern", @pattern, class: "button button--quiet" %>
-</header>
-
-<% if @unreachable %>
-  <p class="empty">
-    Pandatone did not answer: <%= @unreachable.message %>.
-    <br>
-    Composing needs nothing from it — only dressing does. Set
-    <code>PANDATONE_URL</code> and <code>PANDATONE_TOKEN</code> and try again.
-  </p>
-<% else %>
-  <p class="hint measure">
-    Every palette Pandatone has, shown as the grays of its own lightness. The preview is
-    where colour belongs; what a palette is for here is how its values are spread, and six
-    hues shouting at each other is the one thing that hides it.
-  </p>
-
-  <%= render "palettes", palettes: @serving, heading: "Can dress this pattern",
-        note: "#{pluralize(@pattern.slot_count, "slot")}, so at least that many colours." %>
-
-  <% if @demoted.any? %>
-    <%= render "palettes", palettes: @demoted, heading: "Too few colours",
-        note: "Kept rather than hidden: take a slot away with − and these come back into range." %>
-  <% end %>
-
-  <div class="run">
-    <%= link_to "Refresh from Pandatone", new_pattern_colorway_path(@pattern, refresh: 1),
-          class: "button button--quiet" %>
-  </div>
 <% end %>
+
+<%# The picker is Pandatone's dresser's: the catalogue, split into what can
+    dress this pattern and what cannot, on the ladder. %>
+<%= render "pandatone/dresser/picker",
+      slot_count: @pattern.slot_count, serving: @serving.to_a, demoted: @demoted.to_a, unreachable: @unreachable,
+      noun: "this pattern",
+      dress_url: ->(palette) { pattern_colorways_path(@pattern, palette_id: palette.id) },
+      refresh_url: new_pattern_colorway_path(@pattern, refresh: 1) %>

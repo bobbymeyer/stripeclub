@@ -3,16 +3,11 @@
  * The accent, the typeface, the value scale, the field count and the
  * baseline are the host's: they are what the whole site is set in, and an
  * engine that changed them would change the page around itself. What is
- * here is only what a stripe pattern measures that a host could not know.
+ * here is only what a stripe pattern lays out that a host could not know.
  *
  * Unlayered on purpose, like a host's own stylesheets: everything its-swiss
  * ships is inside a cascade layer, and an unlayered rule beats every layered
  * one whatever its specificity. */
-
-:root {
-  /* The ladder the preview and the repeat table are measured on. */
-  --baseline: 0.5rem;
-}
 
 /* The grid itself lives here, not in the gem: which blocks span which fields
    is what this application looks like.
@@ -25,17 +20,21 @@
 
    Everything else on every other page runs the whole field, which is what
    .grid does when a child says nothing. */
-main.grid > .page-head { --span: 6; }
-
-/* The index is a list of names against small drawings, and none of its four
-   columns wants width. Run the whole field and the name column takes the
-   slack — eight hundred pixels of it before the drawing starts. Four fields
-   is where the name and the thing it names are still near each other. */
-main.grid > .patterns,
-main.grid > .pagination { --span: 4; }
-
 main.grid > .preview-figure { --span: 2; }
 main.grid > .detail { --span: 4; }
+
+/* The index is cards on the library's .cards, each --card fields wide. A
+   tile two fields wide is the size a pattern reads at; three to a row. The
+   breakpoints below change the one number and the list re-proportions. */
+.pattern-cards { --card: 2; }
+
+@media (max-width: 48rem) {
+  .pattern-cards { --card: 3; }
+}
+
+@media (max-width: 34rem) {
+  .pattern-cards { --card: 6; }
+}
 
 /* Below the fold of a phone there are no six fields to divide, so the two
    blocks stack and each takes what there is. The breakpoint is the measure
