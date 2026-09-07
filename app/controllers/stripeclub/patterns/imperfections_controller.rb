@@ -7,21 +7,26 @@ module Stripeclub
       imperfection = @pattern.imperfection || @pattern.build_imperfection
 
       if imperfection.update(imperfection_params)
-        redirect_to @pattern, notice: imperfection.any? ? "Roughened." : "Clean again."
+        redirect_to finish, notice: imperfection.any? ? "Roughened." : "Clean again."
       else
-        redirect_to @pattern, alert: imperfection.errors.full_messages.to_sentence
+        redirect_to finish, alert: imperfection.errors.full_messages.to_sentence
       end
     end
 
     def destroy
       @pattern.imperfection&.destroy
 
-      redirect_to @pattern, notice: "Imperfection removed. The composition was never touched."
+      redirect_to finish, notice: "Imperfection removed. The composition was never touched."
     end
 
     private
       def set_pattern
         @pattern = Pattern.find(params[:pattern_id])
+      end
+
+      # Back to the surface the roughness lives on.
+      def finish
+        pattern_path(@pattern, section: "finish")
       end
 
       def imperfection_params

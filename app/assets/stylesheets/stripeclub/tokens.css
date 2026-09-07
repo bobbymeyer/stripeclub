@@ -20,7 +20,7 @@
 
    Everything else on every other page runs the whole field, which is what
    .grid does when a child says nothing. */
-main.grid > .preview-figure { --span: 2; }
+main.grid > .preview-column { --span: 2; }
 main.grid > .detail { --span: 4; }
 
 /* The index is cards on the library's .cards, each --card fields wide. A
@@ -41,6 +41,6 @@ main.grid > .detail { --span: 4; }
    plus the page's own inset either side — the width at which a four-field
    column stops being a readable measure — rather than a device. */
 @media (max-width: 40rem) {
-  main.grid > .preview-figure,
+  main.grid > .preview-column,
   main.grid > .detail { --span: 6; }
 }

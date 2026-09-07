@@ -1,0 +1,54 @@
+<%# locals: (pattern:) %>
+<%# What the pattern wears: each colorway a snapshot of a palette, and the
+    rules its slots resolve by. Choosing one is Pandatone's dresser's. %>
+<section class="colorways stack">
+  <div class="run">
+    <%= link_to "Dress this pattern", new_pattern_colorway_path(pattern), class: "button button--primary" %>
+  </div>
+
+  <%= explain "Colour arrives from Pandatone as a rule over a snapshot, never as a list of hexes. " \
+        "A slot bound to its rank takes the palette's colour at that rank, lightest first; one " \
+        "bound to a rule takes its colour from the rule instead, and is hatched to say so. Drift " \
+        "is asked for, never applied: a design that was finished does not change because someone " \
+        "opened another tool." %>
+
+  <% if pattern.colorways.none? %>
+    <p class="empty">Not dressed. The pattern is complete in value.</p>
+  <% end %>
+
+  <% pattern.colorways.each do |colorway| %>
+    <article class="colorway stack">
+      <h2><%= colorway.snapshot.palette_name %></h2>
+
+      <% if colorway.invalidated? %>
+        <p class="hint">
+          Invalid: the pattern has <%= pattern.slot_count %> slots and this palette has
+          <%= colorway.snapshot.size %> colours. Kept, not deleted — take a slot away and it comes back.
+        </p>
+      <% else %>
+        <%= pattern_preview colorway, size: 180, period: 45, class: "preview--inline" %>
+
+        <% ruled = pattern.values.reject { |value| colorway.rule_for(value).binds_to_rank? } %>
+        <% if ruled.empty? %>
+          <p class="quiet">Every slot by rank.</p>
+        <% else %>
+          <table class="table">
+            <thead><tr><th scope="col">Slot</th><th scope="col">Rule</th></tr></thead>
+            <tbody>
+              <% ruled.each do |value| %>
+                <tr>
+                  <td><%= value_swatch value, colorway: colorway %> <%= slot_name value %></td>
+                  <td><%= rule_name colorway.rule_for(value) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      <% end %>
+
+      <%= render "pandatone/dresser/actions", colorway: colorway,
+            drift_url: drift_pattern_colorway_path(pattern, colorway),
+            remove_url: pattern_colorway_path(pattern, colorway) %>
+    </article>
+  <% end %>
+</section>
