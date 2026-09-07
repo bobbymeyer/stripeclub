@@ -27,14 +27,10 @@
   width: 6rem;
 }
 
-/* On a card the tile fills the figure the library has measured to whole
-   lines; the hairline is the figure's edge. */
-.pattern-card .preview {
-  height: 100%;
-}
-
-.pattern-card .preview svg {
-  height: 100%;
+/* On a card the tile is the figure's own picture, sized by the library to
+   whole lines; the hairline it had as a preview goes with the frame. */
+.pattern-card .card__figure > svg {
+  border: var(--rule-hair) solid var(--rule);
 }
 
 .preview-figure {

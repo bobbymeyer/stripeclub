@@ -5,7 +5,7 @@
 <li class="card pattern-card" id="<%= dom_id(pattern) %>">
   <%= link_to pattern, class: "card__link" do %>
     <figure class="card__figure figure" style="--ratio: 1">
-      <%= pattern_preview pattern, size: 240, period: 60 %>
+      <%= pattern_preview pattern, size: 240, period: 60, bare: true %>
     </figure>
     <span class="card__name"><%= pattern.name %></span>
   <% end %>

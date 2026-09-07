@@ -5,11 +5,14 @@ module Stripeclub
     # Handed a colorway it draws the pattern wearing it; handed a pattern on its
     # own it draws it in value, which is not a placeholder for the coloured
     # version — a pattern is structure, so its values are what it actually is.
-    def pattern_preview(subject, size: 240, period: 60, **options)
+    #
+    # bare: the SVG on its own, for a .figure that sizes its own picture.
+    def pattern_preview(subject, size: 240, period: 60, bare: false, **options)
       dressing = subject.is_a?(Pattern) ? ValueScale.new(subject) : subject
+      svg = SvgPattern.new(dressing, size: size, period: period).to_s
+      return svg if bare
 
-      tag.div(SvgPattern.new(dressing, size: size, period: period).to_s,
-        **options, class: token_list("preview", options[:class]))
+      tag.div(svg, **options, class: token_list("preview", options[:class]))
     end
 
     # The two axes have names worth using; everything else is a number of

@@ -11,7 +11,7 @@ module Stripeclub
       assert_response :success
       assert_select "header.page-head h1.page-title", text: "Patterns"
       assert_select "ul.cards > li.pattern-card", 2
-      assert_select ".pattern-card .card__figure svg", 2
+      assert_select ".pattern-card .card__figure > svg", 2
       assert_select "svg pattern rect", 6
       assert_select ".pattern-card .card__meta", text: "4 slots · Vertical"
     end
