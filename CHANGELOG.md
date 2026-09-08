@@ -7,6 +7,17 @@ what this file numbers.
 
 ### Changed
 
+- **Nothing here pins a version of ours.** The gemspec asked for
+  `pandatone >= 0.4` and `its-swiss ~> 1.0`; both had to be edited by hand
+  when the other side moved, and neither could ever have been violated —
+  Pandatone is taken from its main branch, and we are its only consumer.
+  Pandatone carries no version requirement now, and its-swiss carries a floor
+  with no ceiling, so a new major arrives with everything else.
+
+## Unreleased
+
+### Changed
+
 - **Pandatone comes from its default branch, not a tag.** A tag cannot exist
   until the change that needs it has merged, so every cross-repo move cost a
   branch pin, a merge, a tag and a re-pin. This Gemfile is only what the
