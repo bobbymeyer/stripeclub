@@ -3,6 +3,16 @@
 Semver. The API is versioned separately, under its own path, and is not
 what this file numbers.
 
+## Unreleased
+
+### Changed
+
+- **Pandatone comes from its default branch, not a tag.** A tag cannot exist
+  until the change that needs it has merged, so every cross-repo move had to
+  pin a branch, merge, tag, and then re-pin. `Gemfile.lock` records the
+  revision either way, which is what makes a checkout reproducible; the
+  gemspec still asks for a version, which is what a host reads.
+
 ## 0.4.0 — 2026-09-08
 
 On its-swiss 1.0.

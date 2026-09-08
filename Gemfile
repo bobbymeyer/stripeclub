@@ -4,9 +4,12 @@ source "https://rubygems.org"
 # dummy application under test/ needs to run it.
 gemspec
 
-# Pandatone is not published to RubyGems; the engine takes it from its tag,
-# the way a host does. its-swiss comes from RubyGems through the gemspec.
-gem "pandatone", github: "bobbymeyer/pandatone", tag: "v0.4.0"
+# Pandatone is not published to RubyGems; the engine takes it from the
+# default branch of its repository. Gemfile.lock records the revision, so a
+# checkout is reproducible, and `bundle update pandatone` is how it moves.
+# The gemspec is what a host reads, and it asks for a version, not a ref.
+# its-swiss comes from RubyGems through the gemspec.
+gem "pandatone", github: "bobbymeyer/pandatone"
 
 # json 3.0.0 (7 September 2026) changed the signature of JSON.parse, and Active
 # Support 8.1.3.1 still calls it the old way: a signed cookie, a JSON column, a
