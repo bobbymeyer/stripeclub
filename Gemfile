@@ -5,9 +5,11 @@ source "https://rubygems.org"
 gemspec
 
 # Pandatone is not published to RubyGems; the engine takes it from the
-# default branch of its repository. Gemfile.lock records the revision, so a
-# checkout is reproducible, and `bundle update pandatone` is how it moves.
-# The gemspec is what a host reads, and it asks for a version, not a ref.
+# default branch of its repository rather than from a tag. A tag cannot
+# exist until the change that needs it has merged, and this Gemfile is only
+# what the dummy under test/ runs on — what a host resolves is the gemspec,
+# which asks for a version. Running the suite against Pandatone's tip is the
+# point: a break between the two shows up here rather than in a host.
 # its-swiss comes from RubyGems through the gemspec.
 gem "pandatone", github: "bobbymeyer/pandatone"
 
