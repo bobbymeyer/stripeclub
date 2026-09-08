@@ -3,6 +3,17 @@
 Semver. The API is versioned separately, under its own path, and is not
 what this file numbers.
 
+## 0.4.0 — 2026-09-08
+
+On its-swiss 1.0.
+
+### Changed
+
+- **Set on its-swiss 1.0.** The library registers its own controllers from
+  a module its shell imports, so the dummy no longer registers them by hand.
+  A form has no width of its own in 1.0; the imperfection form says
+  `measure`, which is where it was.
+
 ## 0.3.0 — 2026-09-07
 
 A day of use. On its-swiss 0.9 and Pandatone 0.3.
