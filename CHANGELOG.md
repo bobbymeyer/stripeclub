@@ -3,6 +3,17 @@
 Semver. The API is versioned separately, under its own path, and is not
 what this file numbers.
 
+## Unreleased
+
+### Changed
+
+- **Pandatone comes from its default branch, not a tag.** A tag cannot exist
+  until the change that needs it has merged, so every cross-repo move cost a
+  branch pin, a merge, a tag and a re-pin. This Gemfile is only what the
+  dummy runs on; a host resolves the gemspec, which still asks for a version.
+  The trade is deliberate: the suite now runs against Pandatone's tip, so a
+  break between the two shows up here rather than in a host.
+
 ## 0.4.0 — 2026-09-08
 
 On its-swiss 1.0.
