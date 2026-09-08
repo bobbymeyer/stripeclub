@@ -13,12 +13,21 @@ for the one it was made for.
 ## Mounting it
 
 ```ruby
-# Gemfile — not on RubyGems; taken from the tag
-gem "stripeclub", github: "bobbymeyer/stripeclub", tag: "v0.1.0"
+# Gemfile — not on RubyGems; taken from its main branch
+gem "stripeclub", github: "bobbymeyer/stripeclub", branch: "main"
 
 # config/routes.rb
 mount Stripeclub::Engine, at: "/stripeclub"
 ```
+
+No tag. A tag cannot exist until the change that needs it has merged, so
+pinning one costs a re-pin on every move; the host's `Gemfile.lock` records
+the revision Bundler resolved, and that is what pins a deploy. `bundle update
+stripeclub` moves it, and the lock's diff is the record of when. Name the
+branch rather than leaving the ref off: with no ref, Bundler resolves
+whatever the cached clone's HEAD happens to be. Releases are still numbered
+in `CHANGELOG.md`, and the gemspec's constraints are what a host resolves
+against.
 
 Then `bin/rails db:migrate`: the engine's migrations run with the host's.
 Its tables are prefixed `stripeclub_`. `bin/rails stripeclub:seed` plants the
@@ -51,10 +60,10 @@ palette afterwards is drift — reported when you ask for it and never applied.
 Without a Pandatone that answers, every page still works except the picker,
 which says so.
 
-**The script.** its-swiss pins two Stimulus controllers from its engine, and
-the host registers them once in its `controllers/index.js`:
-`its-swiss-clipboard` and `its-swiss-live-search`, the second for the search
-on the patterns index. Stripeclub ships no JavaScript of its own.
+**The script.** its-swiss registers its own two controllers from the module
+its shell imports — `its-swiss-clipboard` and `its-swiss-live-search`, the
+second for the search on the patterns index — so a host registers nothing for
+it. Stripeclub ships no JavaScript of its own.
 
 ## Calling it from Ruby
 
@@ -179,7 +188,7 @@ stubbed at the wire with WebMock.
 
 ## Styling
 
-[its-swiss](https://github.com/bobbymeyer/its-swiss), pinned `~> 0.8` in the
+[its-swiss](https://github.com/bobbymeyer/its-swiss), pinned `~> 1.0` in the
 gemspec. What Stripeclub found in it as the second consumer is in
 [ITS-SWISS-CANDIDATES.md](ITS-SWISS-CANDIDATES.md); most of it went into the
 gem at 0.7 and 0.8, and the file says which. The page head, the filter block
