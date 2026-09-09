@@ -45,7 +45,10 @@ paths:
     get:
       operationId: listPatterns
       tags: [patterns]
-      summary: Every pattern, by name.
+      summary: Every pattern, by name, or the ones carrying a tag.
+      parameters:
+        - $ref: "#/components/parameters/tag"
+        - $ref: "#/components/parameters/q"
       responses:
         "200":
           description: Summaries.
@@ -209,6 +212,18 @@ components:
       required: true
       schema:
         type: integer
+    tag:
+      name: tag
+      in: query
+      description: One tag, matched whole. "brand" does not match a pattern tagged "brands".
+      schema:
+        type: string
+    q:
+      name: q
+      in: query
+      description: A substring of the name, as typed.
+      schema:
+        type: string
     period:
       name: period
       in: query
@@ -255,12 +270,20 @@ components:
   schemas:
     PatternSummary:
       type: object
-      required: [id, name, slot_count, angle]
+      required: [id, name, slot_count, angle, tags]
       properties:
         id: { type: integer }
         name: { type: string }
         slot_count: { type: integer, description: How many values the pattern draws. Slot 0 is the ground. }
         angle: { type: number, description: Degrees. 90 is vertical, 0 horizontal. }
+        tags:
+          type: array
+          items: { type: string }
+          description: >-
+            Downcased, whole words, in the order they were given. How something
+            outside Stripeclub finds this pattern without knowing what a pattern
+            is: a tool that gathers by tag asks for these and gets patterns back
+            beside whatever else carries the tag.
     Pattern:
       allOf:
         - $ref: "#/components/schemas/PatternSummary"

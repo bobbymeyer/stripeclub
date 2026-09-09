@@ -4,6 +4,8 @@
 # of the palette a colorway applies to it and not of the pattern at all.
 module Stripeclub
   class Pattern < ApplicationRecord
+    include Taggable
+
     HALF_TURN = 180
 
     ValueInUse = Class.new(StandardError)

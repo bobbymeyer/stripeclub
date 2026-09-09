@@ -28,6 +28,20 @@ module Stripeclub
       end
     end
 
+    # A tag a consumer cannot see described is a tag it cannot use. The
+    # narrowing and the field it narrows on are both part of the contract.
+    test "the tags a pattern carries, and the narrowing on them, are described" do
+      assert_includes spec.dig("components", "schemas", "PatternSummary", "required"), "tags"
+      assert_equal "array", spec.dig("components", "schemas", "PatternSummary", "properties", "tags", "type")
+
+      described = spec.dig("paths", "/patterns", "get", "parameters").map { |parameter|
+        parameter["$ref"].to_s.split("/").last
+      }
+
+      assert_includes described, "tag"
+      assert_includes described, "q"
+    end
+
     private
       def spec
         @spec ||= Stripeclub.openapi

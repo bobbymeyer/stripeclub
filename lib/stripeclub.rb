@@ -8,7 +8,8 @@ require "stripeclub/seeds"
 # sends — so a caller never holds one of the engine's records, and the same
 # signature could be wrapped in HTTP the day this is split to its own deploy.
 #
-#   Stripeclub.patterns                        # => [ { id:, name:, slot_count:, angle: }, ... ]
+#   Stripeclub.patterns                        # => [ { id:, name:, slot_count:, angle:, tags: }, ... ]
+#   Stripeclub.patterns(tag: "bobbymeyerdotcom")
 #   Stripeclub.pattern("Awning")               # => { id:, name:, ..., sequence:, rows:, colorways: }
 #   Stripeclub.colorways                       # => [ { id:, pattern_id:, palette_id:, ... }, ... ]
 #   Stripeclub.colorway(12)                    # => { ..., rules:, colors: }
@@ -21,8 +22,14 @@ module Stripeclub
   mattr_accessor :api_base_controller_class, default: "::ApiController"
 
   class << self
-    def patterns
-      PatternSerializer.many(Pattern.order(:name))
+    # Pattern summaries, by name. tag narrows to one tag — which is how a
+    # tool that gathers by tag asks Stripeclub for its share — and q to a
+    # substring of the name.
+    def patterns(tag: nil, q: nil)
+      patterns = Pattern.name_matching(q)
+      patterns = patterns.tagged(tag) if tag.present?
+
+      PatternSerializer.many(patterns.order(:name))
     end
 
     # One pattern with its structure, by id or by name, or nil.
@@ -53,6 +60,13 @@ module Stripeclub
     def tile_svg(key, colorway: nil, period: SvgPattern::PERIOD)
       dressing = dressing_for(key, colorway)
       Tile.new(dressing, period: period).to_svg if dressing
+    end
+
+    # Every tag in use, which is what a client needs to offer the same
+    # filtering the interface does. A Hash keyed by what carries them, so a
+    # second taggable kind arrives as a key rather than as a new method.
+    def tags
+      { patterns: Pattern.all_tags }
     end
 
     # The API's description of itself, as a Hash ready to serve as JSON.

@@ -10,4 +10,7 @@
     <span class="card__name"><%= pattern.name %></span>
   <% end %>
   <span class="card__meta"><%= pluralize pattern.slot_count, "slot" %> · <%= angle_in_words pattern %></span>
+  <% if pattern.tags.any? %>
+    <p class="tags"><%= tag_links(pattern.tags) { |tag| patterns_path(tag: tag) } %></p>
+  <% end %>
 </li>

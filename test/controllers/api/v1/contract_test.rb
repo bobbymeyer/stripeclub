@@ -11,7 +11,7 @@ require "test_helper"
 module Stripeclub
   class Api::V1::ContractTest < ActionDispatch::IntegrationTest
     setup do
-      @pattern = Pattern.create!(name: "Bias", slot_count: 3, angle: 30)
+      @pattern = Pattern.create!(name: "Bias", slot_count: 3, angle: 30, tags: %w[ brand ])
       @pattern.sequence.stripes.each_with_index { |s, i| s.update_column(:width, [ 0.5, 0.3, 0.2 ][i]) }
 
       @banded = Pattern.create!(name: "Lightning", slot_count: 2, angle: 45, row_depth: 4).divide_into_rows!(2)
@@ -29,8 +29,8 @@ module Stripeclub
       assert_equal "application/json", response.media_type
 
       expected = [
-        { "id" => @pattern.id, "name" => "Bias", "slot_count" => 3, "angle" => 30.0 },
-        { "id" => @banded.id, "name" => "Lightning", "slot_count" => 2, "angle" => 45.0 }
+        { "id" => @pattern.id, "name" => "Bias", "slot_count" => 3, "angle" => 30.0, "tags" => [ "brand" ] },
+        { "id" => @banded.id, "name" => "Lightning", "slot_count" => 2, "angle" => 45.0, "tags" => [] }
       ]
 
       assert_equal expected, JSON.parse(response.body)
@@ -40,7 +40,7 @@ module Stripeclub
       get api_v1_pattern_url(@pattern)
 
       assert_equal({
-        "id" => @pattern.id, "name" => "Bias", "slot_count" => 3, "angle" => 30.0,
+        "id" => @pattern.id, "name" => "Bias", "slot_count" => 3, "angle" => 30.0, "tags" => [ "brand" ],
         "row_depth" => 1.0,
         "sequence" => [
           { "position" => 0, "value" => 0, "width" => 0.5 },

@@ -8,7 +8,7 @@ module Stripeclub
     # Collections and embedded references carry the summary; only a pattern
     # asked for by itself carries its structure.
     def summary(pattern)
-      { id: pattern.id, name: pattern.name, slot_count: pattern.slot_count, angle: pattern.angle.to_f }
+      { id: pattern.id, name: pattern.name, slot_count: pattern.slot_count, angle: pattern.angle.to_f, tags: pattern.tags }
     end
 
     def one(pattern)
