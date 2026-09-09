@@ -111,3 +111,28 @@
   gap: var(--space-3);
   padding-block-end: var(--space-3);
 }
+
+/* --- Tags ---------------------------------------------------------------
+   How a pattern is found by something that knows nothing about patterns: a
+   project gathers everything carrying its tag. On a card they are the last
+   line, under the two numbers, and at the same weight as them — a tag is a
+   fact about the pattern and not a second name for it.
+
+   The second drawing of this in the family (Pandatone's is the first), so it
+   is a candidate for its-swiss rather than a claim on Pandatone. Listed in
+   ITS-SWISS-CANDIDATES.md. */
+.pattern-card .tags {
+  margin: 0;
+  font-size: var(--size-1);
+  line-height: var(--space-2);
+  color: var(--ink-quiet);
+}
+
+/* The same size on a taller line box: these are the smallest thing on the
+   page you tap, and at the type's own line box they are under the 24px
+   minimum. The leading does the work so the type does not have to change. */
+.pattern-card .tag {
+  display: inline-block;
+  line-height: var(--space-3);
+  color: inherit;
+}

@@ -3,18 +3,29 @@
 <% end %>
 
 <%# The library's filter block: a search that narrows as you type, into the
-    frame below, and two registers of one-of-a-handful. Each carries the
+    frame below, and the registers of one-of-a-handful. Each carries the
     others, so choosing one does not drop the rest. %>
 <div class="filters">
-  <%= search_form patterns_path, frame: "patterns", keep: { lean: @lean, sort: @sort } %>
+  <%= search_form patterns_path, frame: "patterns", keep: { lean: @lean, tag: @tag, sort: @sort } %>
 
   <%= filter_register "Leaning",
-        [ [ "All", patterns_path(q: params[:q], sort: @sort), @lean.nil? ],
-          *Stripeclub::Pattern::LEANS.map { |key, label| [ label, patterns_path(lean: key, q: params[:q], sort: @sort), @lean == key ] } ],
+        [ [ "All", patterns_path(q: params[:q], tag: @tag, sort: @sort), @lean.nil? ],
+          *Stripeclub::Pattern::LEANS.map { |key, label| [ label, patterns_path(lean: key, q: params[:q], tag: @tag, sort: @sort), @lean == key ] } ],
         name: "lean" %>
 
+  <%# The tags are whatever the patterns carry, so a project's tag is on the
+      bar the moment a pattern is given it — and no register at all until
+      something is tagged, because an empty filter is a control that cannot
+      be used. %>
+  <% if @tags.any? %>
+    <%= filter_register "Tagged",
+          [ [ "All", patterns_path(q: params[:q], lean: @lean, sort: @sort), @tag.nil? ],
+            *@tags.map { |tag| [ tag, patterns_path(tag: tag, q: params[:q], lean: @lean, sort: @sort), @tag == tag ] } ],
+          name: "tag" %>
+  <% end %>
+
   <%= filter_register "Sort by",
-        Stripeclub::Pattern::SORTS.map { |key, label| [ label, patterns_path(sort: key, q: params[:q], lean: @lean), @sort == key ] },
+        Stripeclub::Pattern::SORTS.map { |key, label| [ label, patterns_path(sort: key, q: params[:q], lean: @lean, tag: @tag), @sort == key ] },
         name: "sort" %>
 </div>
 
@@ -28,7 +39,7 @@
     </ul>
 
     <%= render "its_swiss/shared/pagination",
-          page: @page, pages: @pages, url: ->(number) { patterns_path(page: number, q: params[:q], lean: @lean, sort: @sort) } %>
+          page: @page, pages: @pages, url: ->(number) { patterns_path(page: number, q: params[:q], lean: @lean, tag: @tag, sort: @sort) } %>
   <% elsif @total.zero? %>
     <p class="empty">
       No patterns yet. A pattern is structure — how many slots, how wide each stripe,

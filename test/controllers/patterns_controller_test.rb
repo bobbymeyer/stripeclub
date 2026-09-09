@@ -36,6 +36,45 @@ module Stripeclub
       assert_select ".empty", text: "No patterns match."
     end
 
+    # A third register beside the lean and the order. The tags are the
+    # library's own — every tag any pattern carries — so a project's tag is on
+    # the bar the moment a pattern is given it.
+    test "the index narrows by tag, and the register carries the other filters" do
+      Pattern.create!(name: "Awning", slot_count: 2, tags: %w[ bobbymeyerdotcom 2026summer ])
+      Pattern.create!(name: "Bias", slot_count: 3, angle: 30, tags: %w[ bobbymeyerdotcom ])
+      Pattern.create!(name: "Cabana", slot_count: 2)
+
+      get patterns_path(tag: "bobbymeyerdotcom", sort: "slots")
+
+      assert_select "[data-filter=tag] a[aria-current]", text: "bobbymeyerdotcom"
+      assert_select "[data-filter=tag] a", text: "2026summer"
+      assert_select "[data-filter=tag] a[href*='sort=slots']", text: "2026summer"
+      assert_select "turbo-frame#patterns .pattern-card", 2
+      assert_select ".pattern-card .card__name", text: "Bias"
+
+      get patterns_path(tag: "2026summer")
+      assert_select "turbo-frame#patterns .pattern-card", 1
+      assert_select ".pattern-card .card__name", text: "Awning"
+    end
+
+    # No tags at all is no register: an empty filter is a control that cannot
+    # be used, and the bar says so by not being there.
+    test "the tag register is absent until something is tagged" do
+      Pattern.create!(name: "Awning", slot_count: 2)
+
+      get patterns_path
+
+      assert_select "[data-filter=tag]", false
+    end
+
+    test "a pattern carries its tags on its card" do
+      Pattern.create!(name: "Awning", slot_count: 2, tags: %w[ bobbymeyerdotcom ])
+
+      get patterns_path
+
+      assert_select ".pattern-card .tags a", text: "bobbymeyerdotcom"
+    end
+
     test "the index paginates once there are more patterns than fit" do
       (PatternsController::PER_PAGE + 2).times { |n| Pattern.create!(name: "Pattern #{n}", slot_count: 2) }
 
@@ -245,6 +284,30 @@ module Stripeclub
       patch pattern_path(pattern), params: { pattern: { name: "Fixed", slot_count: 5 } }
 
       assert_equal 2, pattern.reload.slot_count
+    end
+
+    # Tags are typed as a line rather than picked, because the tag a project
+    # is keyed to may not exist on anything yet: the first pattern given it is
+    # what brings it into being.
+    test "tags are given and taken away on the pattern's own form" do
+      pattern = Pattern.create!(name: "Awning", slot_count: 2)
+
+      get edit_pattern_path(pattern)
+      assert_select "input[name='pattern[tag_list]']"
+
+      patch pattern_path(pattern), params: { pattern: { tag_list: "BobbyMeyerDotCom, 2026summer" } }
+
+      assert_redirected_to pattern_path(pattern)
+      assert_equal %w[ bobbymeyerdotcom 2026summer ], pattern.reload.tags
+
+      patch pattern_path(pattern), params: { pattern: { tag_list: "" } }
+      assert_equal [], pattern.reload.tags
+    end
+
+    test "a pattern is composed with its tags" do
+      post patterns_path, params: { pattern: { name: "Awning", slot_count: 2, angle: 90, tag_list: "brand" } }
+
+      assert_equal %w[ brand ], Pattern.sole.tags
     end
 
     # --- Rows ------------------------------------------------------------

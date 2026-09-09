@@ -195,3 +195,30 @@ Worth as much as the list above, since the point was to test the boundary:
   documented.
 - **The grid primitives.** Stripeclub declared six columns and two spans and
   got the page it wanted. The gem shipping no grid is the right call.
+
+---
+
+## 8. Tags on a card are the second drawing of one pattern
+
+Pandatone renders a record's tags as a run of links back to the index
+narrowed to each — a `tag_links` helper, a `.tags` line, a `.tag` link with
+its line box raised to a 24px target. Stripeclub drew the same thing when
+patterns got tags, because a tag that is not a way back to everything else
+carrying it is only a label.
+
+Under the rule, this is now at two applications: `tag_links`, `.tags` and
+`.tag` are a candidate for its-swiss. Not for Pandatone — a tag is not a
+colour, and nothing about rendering one asks Pandatone anything.
+
+What Stripeclub has, and what would move: eight lines of helper in
+`app/helpers/stripeclub/application_helper.rb` and a `.pattern-card .tags`
+block in `components.css`. The helper is the part worth promoting; the
+raised line box on `.tag` is the part a library should know, since it is an
+accessibility floor and not a house style.
+
+Note what does **not** move with it: `Taggable`, the model concern, is not
+its-swiss's — a `tagged` scope with SQL in it is not a typographic style.
+Its second drawing is recorded in Stripeclub's changelog and its home, if a
+third appears, is a small gem of its own. Not the host: the chassis holds
+no models, and an engine that included one of its concerns could not boot
+outside it.

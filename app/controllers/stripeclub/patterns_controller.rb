@@ -6,15 +6,18 @@ module Stripeclub
 
     before_action :set_pattern, only: %i[ show edit update destroy ]
 
-    # Narrowed by a name as typed, by which way the stripes lean, and put in
-    # one of three orders; the filters are the library's registers and the
-    # scopes are the pattern's.
+    # Narrowed by a name as typed, by which way the stripes lean, by a tag,
+    # and put in one of three orders; the filters are the library's registers
+    # and the scopes are the pattern's.
     def index
       @sort = Pattern::SORTS.key?(params[:sort]) ? params[:sort] : "name"
       @lean = Pattern::LEANS.key?(params[:lean]) ? params[:lean] : nil
+      @tag = params[:tag].presence
+      @tags = Pattern.all_tags
       @total = Pattern.count
 
       narrowed = Pattern.name_matching(params[:q]).leaning(@lean)
+      narrowed = narrowed.tagged(@tag) if @tag
       @pages = [ (narrowed.count / PER_PAGE.to_f).ceil, 1 ].max
       @page = params[:page].to_i.clamp(1, @pages)
       @patterns = narrowed.sorted(@sort).offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
@@ -69,11 +72,11 @@ module Stripeclub
       # to strand a stripe. Left editable here it would be a number someone
       # could type over, and the values and stripes under it would not follow.
       def pattern_params
-        params.expect(pattern: [ :name, :angle ])
+        params.expect(pattern: [ :name, :angle, :tag_list ])
       end
 
       def composition_params
-        params.expect(pattern: [ :name, :angle, :slot_count ])
+        params.expect(pattern: [ :name, :angle, :slot_count, :tag_list ])
       end
   end
 end

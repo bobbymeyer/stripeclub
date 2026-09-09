@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_05_100003) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_09_120001) do
   create_table "pandatone_colors", force: :cascade do |t|
     t.integer "b", null: false
     t.decimal "c", precision: 5, scale: 1, null: false
@@ -87,6 +87,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_05_100003) do
     t.string "name", null: false
     t.decimal "row_depth", precision: 9, scale: 6, default: "1.0", null: false
     t.integer "slot_count", default: 1, null: false
+    t.json "tags", default: [], null: false
     t.datetime "updated_at", null: false
   end
 

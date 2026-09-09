@@ -14,7 +14,7 @@ module Stripeclub
       Pattern.create!(name: "Bias", slot_count: 3, angle: 30)
 
       assert_equal [ "Awning", "Bias" ], Stripeclub.patterns.map { |p| p[:name] }
-      assert_equal %i[ id name slot_count angle ], Stripeclub.patterns.first.keys
+      assert_equal %i[ id name slot_count angle tags ], Stripeclub.patterns.first.keys
     end
 
     test "a pattern is found by id or by name, with its structure, or is nil" do
@@ -44,6 +44,33 @@ module Stripeclub
       [ Stripeclub.patterns, Stripeclub.pattern("Awning"), Stripeclub.colorways, Stripeclub.colorway(@colorway.id), Stripeclub.tile("Awning") ].each do |answer|
         assert_nothing_raised { JSON.generate(answer) }
       end
+    end
+
+    # What a project asks Stripeclub for: everything carrying a tag, as plain
+    # data, through the same method a caller would wrap in HTTP later.
+    test "patterns narrow to one tag" do
+      @pattern.update!(tags: %w[ bobbymeyerdotcom 2026summer ])
+      Pattern.create!(name: "Bias", slot_count: 3, angle: 30, tags: %w[ bobbymeyerdotcom ])
+      Pattern.create!(name: "Cabana", slot_count: 2)
+
+      assert_equal [ "Awning", "Bias" ], Stripeclub.patterns(tag: "bobbymeyerdotcom").map { |p| p[:name] }
+      assert_equal [ "Awning" ], Stripeclub.patterns(tag: "2026summer").map { |p| p[:name] }
+      assert_equal %w[ bobbymeyerdotcom 2026summer ], Stripeclub.patterns(tag: "2026summer").first[:tags]
+      assert_empty Stripeclub.patterns(tag: "nothing")
+      assert_equal 3, Stripeclub.patterns.size, "no tag is every pattern"
+    end
+
+    test "patterns narrow to a name as typed" do
+      Pattern.create!(name: "Bias", slot_count: 3, angle: 30)
+
+      assert_equal [ "Awning" ], Stripeclub.patterns(q: "awn").map { |p| p[:name] }
+    end
+
+    test "every tag in use, which is what a client needs to offer the same filtering" do
+      @pattern.update!(tags: %w[ brand ])
+      Pattern.create!(name: "Bias", slot_count: 3, tags: %w[ print brand ])
+
+      assert_equal({ patterns: %w[ brand print ] }, Stripeclub.tags)
     end
   end
 end

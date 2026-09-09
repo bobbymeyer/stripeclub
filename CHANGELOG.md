@@ -5,6 +5,24 @@ what this file numbers.
 
 ## Unreleased
 
+### Added
+
+- **A pattern carries tags.** The discovery mechanism Pandatone has had on a
+  palette since its first commit, for the same reason: it is how something
+  that knows nothing about patterns finds one. `Stripeclub.patterns(tag:)`
+  narrows to a whole tag, `Stripeclub.tags` says which are in use, the API
+  index takes `?tag=` and `?q=`, and `PatternSummary` carries `tags` — a wire
+  format change, so the contract test moved with it.
+
+  `Stripeclub::Taggable` is a copy of Pandatone's concern rather than an
+  include of it, on purpose. `Pandatone::Dresser` is published surface
+  because a consumer asks Pandatone for palettes; nothing about a pattern's
+  tags asks Pandatone anything, and including its concern would make them
+  Pandatone's business and stop this engine booting without it. If a third
+  tool draws this, the home is a gem of its own.
+
+## Unreleased
+
 ### Changed
 
 - **Nothing here pins a version of ours.** The gemspec asked for

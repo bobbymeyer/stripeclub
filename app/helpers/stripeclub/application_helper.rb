@@ -15,6 +15,16 @@ module Stripeclub
       tag.div(svg, **options, class: token_list("preview", options[:class]))
     end
 
+    # A pattern's tags, each a way back to the index narrowed to it.
+    #
+    # The second drawing of this — Pandatone's `tag_links` is the first — and
+    # so a candidate for its-swiss under the rule in ITS-SWISS-CANDIDATES.md,
+    # not something to reach into Pandatone for. Eight lines of markup is a
+    # cheaper duplication than a dependency in the wrong direction.
+    def tag_links(tags, &url)
+      safe_join(tags.map { |tag| link_to(tag, url.call(tag), class: "tag") }, " · ")
+    end
+
     # The two axes have names worth using; everything else is a number of
     # degrees and reads better as one.
     def angle_in_words(pattern)

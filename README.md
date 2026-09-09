@@ -71,7 +71,9 @@ The same questions the API answers, as methods, with plain data back — the
 hashes the API serializes, never a record of the engine's.
 
 ```ruby
-Stripeclub.patterns                         # => [ { id:, name:, slot_count:, angle: }, ... ]
+Stripeclub.patterns                         # => [ { id:, name:, slot_count:, angle:, tags: }, ... ]
+Stripeclub.patterns(tag: "bobbymeyerdotcom") # the ones carrying a whole tag
+Stripeclub.tags                             # => { patterns: [ "brand", ... ] }
 Stripeclub.pattern("Awning")                # => { ..., sequence:, rows:, colorways: }
 Stripeclub.colorways
 Stripeclub.colorway(12)                     # => { ..., rules:, colors: }

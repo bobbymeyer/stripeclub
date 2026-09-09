@@ -7,7 +7,7 @@ module Stripeclub
         # The reads go through the public interface, so what a Ruby caller
         # gets and what an HTTP caller gets are one implementation.
         def index
-          render json: Stripeclub.patterns
+          render json: Stripeclub.patterns(tag: params[:tag], q: params[:q])
         end
 
         def show

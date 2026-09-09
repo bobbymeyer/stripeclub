@@ -12,6 +12,25 @@ module Stripeclub
       assert_equal @pattern.id, JSON.parse(response.body)["id"]
     end
 
+    # The same narrowing the interface offers, over the wire: a tool that
+    # gathers by tag reads patterns the way it reads palettes.
+    test "the index narrows by tag and by name" do
+      @pattern.update!(tags: %w[ bobbymeyerdotcom ])
+      Pattern.create!(name: "Bias", slot_count: 3, angle: 30)
+
+      get api_v1_patterns_url(tag: "bobbymeyerdotcom")
+
+      assert_response :success
+      assert_equal [ "Awning" ], JSON.parse(response.body).map { |p| p["name"] }
+      assert_equal [ "bobbymeyerdotcom" ], JSON.parse(response.body).first["tags"]
+
+      get api_v1_patterns_url(q: "bia")
+      assert_equal [ "Bias" ], JSON.parse(response.body).map { |p| p["name"] }
+
+      get api_v1_patterns_url
+      assert_equal 2, JSON.parse(response.body).size
+    end
+
     test "a name that is nobody's pattern is not found rather than an error" do
       get api_v1_pattern_url("Nothing")
 
